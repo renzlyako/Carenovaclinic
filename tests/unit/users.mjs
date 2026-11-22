@@ -1,0 +1,13 @@
+import { userCreateSchema, userUpdateSchema, resetPasswordSchema } from "../../src/lib/validators/user.js";
+let ok=0,bad=0; const t=(n,c)=>{c?ok++:(bad++,console.log("FAIL",n))};
+const base={full_name:"Ana Reyes",email:"a@b.co",password:"Str0ng!Passw0rd",role:"receptionist",specialization:"",license_no:""};
+t("valid recep",userCreateSchema.safeParse(base).success);
+t("weak pw",!userCreateSchema.safeParse({...base,password:"abc"}).success);
+t("bad email",!userCreateSchema.safeParse({...base,email:"x"}).success);
+t("bad role",!userCreateSchema.safeParse({...base,role:"root"}).success);
+t("doctor needs fields",!userCreateSchema.safeParse({...base,role:"doctor"}).success);
+t("doctor ok",userCreateSchema.safeParse({...base,role:"doctor",specialization:"GP",license_no:"PRC-1"}).success);
+t("update doctor missing",!userUpdateSchema.safeParse({full_name:"Ana R",role:"doctor",specialization:"",license_no:""}).success);
+t("update ok",userUpdateSchema.safeParse({full_name:"Ana R",role:"admin",specialization:"",license_no:""}).success);
+t("reset weak",!resetPasswordSchema.safeParse({password:"short"}).success);
+console.log(ok,"pass",bad,"fail");

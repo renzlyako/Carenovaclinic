@@ -1,0 +1,15 @@
+import { consultationSchema as c, prescriptionSchema as p } from "../../src/lib/validators/consultation.js";
+let ok=0,bad=0; const t=(n,x)=>{x?ok++:(bad++,console.log("FAIL",n))};
+const id="3481c58b-911d-4e5b-a0f9-366280cf0a11";
+t("c ok", c.safeParse({diagnosis:"Flu",notes:""}).success);
+t("c blank dx", !c.safeParse({diagnosis:"  ",notes:""}).success);
+t("c long dx", !c.safeParse({diagnosis:"x".repeat(501),notes:""}).success);
+t("c long notes", !c.safeParse({diagnosis:"x",notes:"y".repeat(3001)}).success);
+t("p ok", p.safeParse({medicine_id:id,dosage:"1 tab",qty:"10"}).data?.qty===10);
+t("p bad med", !p.safeParse({medicine_id:"x",dosage:"1",qty:"1"}).success);
+t("p qty 0", !p.safeParse({medicine_id:id,dosage:"1",qty:"0"}).success);
+t("p qty neg", !p.safeParse({medicine_id:id,dosage:"1",qty:"-2"}).success);
+t("p qty decimal", !p.safeParse({medicine_id:id,dosage:"1",qty:"1.5"}).success);
+t("p qty big", !p.safeParse({medicine_id:id,dosage:"1",qty:"1001"}).success);
+t("p dosage blank", !p.safeParse({medicine_id:id,dosage:" ",qty:"1"}).success);
+console.log(ok,"pass",bad,"fail");

@@ -1,0 +1,32 @@
+{
+  "name": "carenova-clinic",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CareNova Family Clinic: Patient, Appointment & Billing Management System",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test": "node tests/run.mjs",
+    "test:unit": "node tests/run.mjs unit",
+    "test:db": "node tests/run.mjs db"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.118.0",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.66.0",
+    "next": "^15.5.28",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "recharts": "^3.10.1",
+    "server-only": "^0.0.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.6.2",
+    "postcss": "^8.5.32",
+    "tailwindcss": "^3.4.19",
+    "@electric-sql/pglite": "^0.5.14"
+  }
+}

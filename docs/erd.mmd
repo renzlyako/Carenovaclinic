@@ -1,0 +1,101 @@
+erDiagram
+  AUTH_USERS ||--|| PROFILES : "1:1 (id)"
+  PROFILES ||--o| DOCTORS : "profile_id"
+  PATIENTS ||--o{ APPOINTMENTS : "patient_id"
+  DOCTORS ||--o{ APPOINTMENTS : "doctor_id"
+  APPOINTMENTS ||--o| CONSULTATIONS : "appointment_id"
+  CONSULTATIONS ||--o{ PRESCRIPTIONS : "consultation_id"
+  MEDICINES ||--o{ PRESCRIPTIONS : "medicine_id"
+  PATIENTS ||--o{ INVOICES : "patient_id"
+  APPOINTMENTS |o--o{ INVOICES : "appointment_id"
+  INVOICES ||--o{ INVOICE_ITEMS : "invoice_id (CASCADE)"
+  MEDICINES |o--o{ INVOICE_ITEMS : "medicine_id"
+  INVOICES ||--o{ PAYMENTS : "invoice_id"
+  PROFILES |o--o{ PATIENTS : "created_by"
+
+  PROFILES {
+    uuid id PK "FK auth.users"
+    text full_name
+    user_role role
+    boolean is_active
+  }
+  DOCTORS {
+    uuid id PK
+    uuid profile_id FK "UNIQUE"
+    text specialization
+    text license_no "UNIQUE"
+  }
+  PATIENTS {
+    uuid id PK
+    text patient_no "UNIQUE, generated"
+    text first_name
+    text last_name
+    date birthdate "CHECK"
+    sex_type sex
+    text contact_no "CHECK format"
+  }
+  MEDICINES {
+    uuid id PK
+    text name "UNIQUE"
+    int stock_qty "CHECK >= 0"
+    int reorder_level
+    numeric unit_price "CHECK >= 0"
+    boolean is_active
+  }
+  APPOINTMENTS {
+    uuid id PK
+    uuid patient_id FK
+    uuid doctor_id FK
+    timestamptz schedule "UNIQUE with doctor"
+    appointment_status status
+  }
+  CONSULTATIONS {
+    uuid id PK
+    uuid appointment_id FK "UNIQUE"
+    text diagnosis
+    text notes
+  }
+  PRESCRIPTIONS {
+    uuid id PK
+    uuid consultation_id FK
+    uuid medicine_id FK
+    text dosage
+    int qty "CHECK > 0"
+    timestamptz dispensed_at
+  }
+  INVOICES {
+    uuid id PK
+    text invoice_no "UNIQUE, generated"
+    uuid patient_id FK
+    uuid appointment_id FK
+    numeric total
+    numeric amount_paid "CHECK <= total"
+    invoice_status status
+  }
+  INVOICE_ITEMS {
+    uuid id PK
+    uuid invoice_id FK
+    uuid medicine_id FK
+    text description
+    int qty "CHECK > 0"
+    numeric unit_price
+    numeric line_total "generated"
+  }
+  PAYMENTS {
+    uuid id PK
+    uuid invoice_id FK
+    numeric amount "CHECK > 0"
+    payment_method method
+    timestamptz paid_at
+  }
+  AUDIT_LOGS {
+    bigint id PK
+    uuid user_id "no FK by design"
+    text user_email
+    text action
+    text table_name
+    text record_id
+    jsonb old_data
+    jsonb new_data
+    timestamptz created_at
+  }

@@ -1,0 +1,24 @@
+import { patientSchema, PATIENT_FIELDS } from "../../src/lib/validators/patient.js";
+let pass=0, fail=0;
+const ok=(n,c,x="")=>{ if(c){pass++;console.log("  PASS",n)} else {fail++;console.log("  FAIL",n,x)} };
+const base={first_name:"Maria",last_name:"Santos",birthdate:"1990-03-14",sex:"female",contact_no:"09171234567",address:"",emergency_contact_name:"",emergency_contact_no:""};
+const t=(over)=>patientSchema.safeParse({...base,...over});
+const msg=(r,k)=>r.success?null:r.error.issues.find(i=>i.path[0]===k)?.message;
+
+ok("valid patient passes", t({}).success);
+ok("fields list matches schema keys", PATIENT_FIELDS.every(k=>k in base) && Object.keys(base).length===PATIENT_FIELDS.length);
+ok("empty first name rejected", msg(t({first_name:"   "}),"first_name")==="First name is required", msg(t({first_name:"   "}),"first_name"));
+ok("81-char name rejected", msg(t({last_name:"x".repeat(81)}),"last_name")==="Maximum 80 characters");
+ok("empty birthdate rejected", msg(t({birthdate:""}),"birthdate")==="Birthdate is required");
+ok("future birthdate rejected", msg(t({birthdate:"2999-01-01"}),"birthdate")==="Birthdate cannot be in the future");
+ok("birthdate before 1900 rejected", msg(t({birthdate:"1899-12-31"}),"birthdate")==="Birthdate is too far in the past");
+ok("empty sex shows friendly message", msg(t({sex:""}),"sex")==="Please select a sex", msg(t({sex:""}),"sex"));
+ok("invalid sex rejected", !t({sex:"robot"}).success);
+ok("letters in phone rejected", !!msg(t({contact_no:"abc1234567"}),"contact_no"));
+ok("too short phone rejected", !!msg(t({contact_no:"123"}),"contact_no"));
+ok("+63 phone with spaces accepted", t({contact_no:"+63 917 1234567"}).success);
+ok("emergency number optional (empty ok)", t({emergency_contact_no:""}).success);
+ok("bad emergency number rejected", !!msg(t({emergency_contact_no:"abc"}),"emergency_contact_no"));
+ok("long address rejected", msg(t({address:"a".repeat(256)}),"address")==="Maximum 255 characters");
+ok("SQL-ish text is just treated as text (no crash)", t({first_name:"Robert'); DROP TABLE patients;--"}).success);
+console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail?1:0);
