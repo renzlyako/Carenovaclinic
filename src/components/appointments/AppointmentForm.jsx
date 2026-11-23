@@ -64,7 +64,6 @@ export default function AppointmentForm({
           label="Date and time *"
           name="schedule"
           type="datetime-local"
-          step="900"
           min={minSchedule}
           defaultValue={value("schedule", appointment ? isoToClinicLocal(appointment.schedule) : "")}
           error={err.schedule}
