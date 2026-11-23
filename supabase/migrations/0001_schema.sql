@@ -1,8 +1,3 @@
--- =====================================================================
--- 0001_schema.sql
--- CareNova Family Clinic: enums, tables, PK/FK, constraints, indexes
--- =====================================================================
-
 -- ---------- ENUMS ----------
 create type public.user_role          as enum ('admin', 'doctor', 'receptionist');
 create type public.sex_type           as enum ('male', 'female', 'other');
@@ -86,7 +81,7 @@ create table public.appointments (
   updated_at  timestamptz not null default now()
 );
 
--- No double-booking: a doctor cannot have two appointments at the same time (unless the earlier one is cancelled).
+
 create unique index appointments_no_double_booking
   on public.appointments (doctor_id, schedule)
   where status <> 'cancelled';
@@ -157,7 +152,6 @@ create table public.payments (
 );
 
 -- ---------- AUDIT LOGS (append-only; see 0003) ----------
--- Intentionally no foreign key: the log must be kept even if the user is deleted.
 create table public.audit_logs (
   id          bigint generated always as identity primary key,
   user_id     uuid,

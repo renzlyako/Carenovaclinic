@@ -1,10 +1,3 @@
--- =====================================================================
--- seed.sql   (sample data for the demo; run AFTER 0001-0005)
--- Part 1 can be re-run (medicines will not be duplicated);
--- but Part 1 patients are added again on every run, so run it only once.
--- =====================================================================
-
--- ---------- PART 1: patients and medicines (no users needed) ----------
 insert into public.patients (first_name, last_name, birthdate, sex, contact_no, address) values
   ('Maria',   'Santos',     date '1990-03-14', 'female', '09171234501', 'Quezon City'),
   ('Juan',    'Dela Cruz',  date '1985-07-02', 'male',   '09171234502', 'Manila'),
@@ -26,8 +19,7 @@ insert into public.medicines (name, description, stock_qty, reorder_level, unit_
   ('Oral Rehydration Salts','Rehydration',                  40, 15, 12.00)
 on conflict (name) do nothing;
 
--- ---------- PART 2: appointments, consultations, billing ----------
--- Runs ONLY if at least one doctor exists (see 0005_bootstrap_admin.sql).
+
 do $$
 declare
   v_doc   uuid;
@@ -45,7 +37,7 @@ begin
 
   select array_agg(id order by patient_seq) into v_p from (select id, patient_seq from public.patients order by patient_seq limit 6) s;
 
-  -- past appointments (completed) + one cancelled
+
   insert into public.appointments (patient_id, doctor_id, schedule, status, reason)
   values (v_p[1], v_doc, date_trunc('hour', now()) - interval '1 day',  'completed', 'Cough and fever') returning id into v_a1;
   insert into public.appointments (patient_id, doctor_id, schedule, status, reason)
@@ -53,13 +45,13 @@ begin
   insert into public.appointments (patient_id, doctor_id, schedule, status, reason)
   values (v_p[3], v_doc, date_trunc('hour', now()) - interval '3 days', 'cancelled', 'Follow-up');
 
-  -- upcoming ones
+
   insert into public.appointments (patient_id, doctor_id, schedule, status, reason) values
     (v_p[4], v_doc, date_trunc('hour', now()) + interval '1 hour',  'scheduled', 'Stomach ache'),
     (v_p[5], v_doc, date_trunc('hour', now()) + interval '1 day',   'scheduled', 'Regular check-up'),
     (v_p[6], v_doc, date_trunc('hour', now()) + interval '2 days',  'scheduled', 'Vaccination');
 
-  -- consultations + prescription
+
   insert into public.consultations (appointment_id, diagnosis, notes)
   values (v_a1, 'Acute upper respiratory infection', 'Rest and drink plenty of fluids.') returning id into v_c1;
   insert into public.consultations (appointment_id, diagnosis, notes)
@@ -69,7 +61,6 @@ begin
   insert into public.prescriptions (consultation_id, medicine_id, dosage, qty)
   values (v_c1, v_med, '1 tablet every 6 hours', 10);
 
-  -- invoices + items + payments (totals/status are updated by triggers)
   insert into public.invoices (patient_id, appointment_id, notes) values (v_p[1], v_a1, 'Consultation') returning id into v_i1;
   insert into public.invoice_items (invoice_id, description, qty, unit_price) values (v_i1, 'Consultation fee', 1, 500);
   insert into public.payments (invoice_id, amount, method) values (v_i1, 500, 'cash');

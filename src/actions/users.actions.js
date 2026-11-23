@@ -14,7 +14,6 @@ import { createUser, updateUser, setUserActive, resetUserPassword } from "@/serv
 
 const ADMIN_ONLY = [ROLES.ADMIN];
 
-// Never send the password back to the browser when a form is re-rendered.
 const withoutPassword = ({ password, ...rest }) => rest;
 
 export async function createUserAction(prevState, formData) {
@@ -61,7 +60,6 @@ export async function updateUserAction(id, prevState, formData) {
   redirect("/admin/users?msg=updated");
 }
 
-// Used with ConfirmDeleteButton: setUserActiveAction.bind(null, id, false)
 export async function setUserActiveAction(id, active, prevState) {
   const admin = await requireRole(ADMIN_ONLY);
   if (!UUID_REGEX.test(id)) return { error: "Invalid user." };
@@ -96,7 +94,7 @@ export async function resetPasswordAction(id, prevState, formData) {
 
   await logAuditEvent({
     userId: admin.id, userEmail: admin.email, action: "ADMIN_RESET_PASSWORD",
-    details: { target_user: id }, // the password itself is never logged
+    details: { target_user: id }, 
   });
   return { success: "Password changed. Share the new password with the user securely." };
 }

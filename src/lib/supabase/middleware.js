@@ -4,7 +4,6 @@ import { canAccess } from "@/lib/constants/roles";
 
 const PUBLIC_PATHS = ["/login", "/unauthorized"];
 
-// Refreshes the session and checks login + role before a page is served.
 export async function updateSession(request) {
   let response = NextResponse.next({ request });
 
@@ -31,21 +30,20 @@ export async function updateSession(request) {
   const { pathname } = request.nextUrl;
   const isPublic = PUBLIC_PATHS.includes(pathname);
 
-  // 1) Not logged in -> login page
+
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
   }
 
-  // 2) Already logged in but visiting /login -> dashboard
+
   if (user && pathname === "/login") {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);
   }
 
-  // 3) Role check
   if (user && !isPublic) {
     const { data: profile } = await supabase
       .from("profiles")

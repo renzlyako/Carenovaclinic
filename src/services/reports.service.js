@@ -16,8 +16,7 @@ async function read(query) {
 
 const money = (n) => Number(n ?? 0).toFixed(2);
 
-// Each report: who may open it, its columns, and a function that returns plain rows.
-// Rows hold raw values (used for the CSV); the page formats money in the table.
+
 export const REPORTS = {
   daily_collection: {
     title: "Daily collection",
@@ -128,7 +127,7 @@ export const REPORTS = {
 
 export const reportsFor = (role) => Object.entries(REPORTS).filter(([, r]) => r.roles.includes(role)).map(([key, r]) => ({ key, ...r }));
 
-// Defaults: from the first day of this month until today (clinic time).
+
 export function resolveRange({ from, to }) {
   const today = clinicToday();
   return { from: from || `${today.slice(0, 8)}01`, to: to || today };

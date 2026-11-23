@@ -11,7 +11,6 @@ import { createPatient, updatePatient, deletePatient } from "@/services/patients
 
 const CAN_EDIT = [ROLES.ADMIN, ROLES.RECEPTIONIST];
 
-// Validated form values -> database row (empty optional fields become NULL).
 function toRow(v) {
   return {
     first_name: v.first_name,
@@ -25,9 +24,9 @@ function toRow(v) {
   };
 }
 
-// Create. Used as: useActionState(createPatientAction, null)
+
 export async function createPatientAction(prevState, formData) {
-  await requireRole(CAN_EDIT); // server-side role check (2nd layer; RLS is the 3rd)
+  await requireRole(CAN_EDIT); 
 
   const values = formDataToObject(formData, PATIENT_FIELDS);
   const parsed = patientSchema.safeParse(values);
@@ -43,7 +42,6 @@ export async function createPatientAction(prevState, formData) {
   redirect(`/patients/${data.id}?msg=created`);
 }
 
-// Update. Used as: useActionState(updatePatientAction.bind(null, id), null)
 export async function updatePatientAction(id, prevState, formData) {
   await requireRole(CAN_EDIT);
   if (!UUID_REGEX.test(id)) return { error: "Invalid patient." };
@@ -57,7 +55,7 @@ export async function updatePatientAction(id, prevState, formData) {
     console.error("updatePatient failed:", error);
     return { error: friendlyDbError(error), values };
   }
-  // RLS hides rows silently, so "0 rows updated" means not found or not allowed.
+
   if (!data || data.length === 0) {
     return { error: "Patient not found or you do not have permission to edit it.", values };
   }
@@ -67,7 +65,7 @@ export async function updatePatientAction(id, prevState, formData) {
   redirect(`/patients/${id}?msg=updated`);
 }
 
-// Delete (admin only). Used as: <ConfirmDeleteButton action={deletePatientAction.bind(null, id)} />
+
 export async function deletePatientAction(id, prevState) {
   await requireRole([ROLES.ADMIN]);
   if (!UUID_REGEX.test(id)) return { error: "Invalid patient." };

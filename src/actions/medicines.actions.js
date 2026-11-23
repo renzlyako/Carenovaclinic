@@ -61,7 +61,6 @@ export async function updateMedicineAction(id, prevState, formData) {
   redirect("/medicines?msg=updated");
 }
 
-// Medicines that were prescribed or billed cannot be deleted (the database protects them). Deactivate instead.
 export async function deleteMedicineAction(id, prevState) {
   await requireRole(ADMIN_ONLY);
   if (!UUID_REGEX.test(id)) return { error: "Invalid medicine." };

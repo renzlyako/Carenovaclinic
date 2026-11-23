@@ -1,14 +1,3 @@
--- =====================================================================
--- 0006_appointments_doctor_guard.sql
--- RUN THIS ONCE in the Supabase SQL Editor (after 0001-0005).
---
--- Why: RLS lets a doctor update their own appointments, and column privileges
--- are the same for every logged-in user. Without this guard, a doctor could
--- change the patient, schedule or reason of an appointment by calling the API
--- directly. This trigger makes sure a doctor can only change the STATUS
--- (scheduled -> completed / cancelled / no_show).
--- =====================================================================
-
 create or replace function public.appointments_doctor_guard()
 returns trigger
 language plpgsql

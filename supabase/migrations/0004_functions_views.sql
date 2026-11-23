@@ -1,11 +1,3 @@
--- =====================================================================
--- 0004_functions_views.sql
--- Business-rule triggers, transaction functions (RPC), auth integration, dashboard views
--- =====================================================================
-
--- ---------- Auth integration: auto-create profile ----------
--- The role is read from raw_app_meta_data (a user CANNOT change it at signup).
--- If no role was set by an admin/the server -> the profile is INACTIVE (it must be approved first).
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
@@ -41,7 +33,7 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
 
--- Backfill: users created before the trigger existed (inactive until an admin approves them).
+
 insert into public.profiles (id, full_name, role, is_active)
 select u.id,
        coalesce(nullif(btrim(u.raw_user_meta_data ->> 'full_name'), ''), split_part(coalesce(u.email, 'user'), '@', 1)),
@@ -49,7 +41,7 @@ select u.id,
 from auth.users u
 on conflict (id) do nothing;
 
--- ---------- Integrity: never end up without an active admin ----------
+
 create or replace function public.protect_last_admin()
 returns trigger
 language plpgsql
@@ -76,7 +68,6 @@ create trigger trg_profiles_protect_last_admin
   before update or delete on public.profiles
   for each row execute function public.protect_last_admin();
 
--- ---------- Integrity: a doctor record must be linked to a profile with role = doctor ----------
 create or replace function public.doctors_check_profile_role()
 returns trigger
 language plpgsql
@@ -96,7 +87,7 @@ create trigger trg_doctors_check_profile_role
   before insert or update of profile_id on public.doctors
   for each row execute function public.doctors_check_profile_role();
 
--- ---------- Integrity: dispensed prescriptions are locked ----------
+
 create or replace function public.prescriptions_guard()
 returns trigger
 language plpgsql
@@ -116,7 +107,7 @@ create trigger trg_prescriptions_guard
   before update or delete on public.prescriptions
   for each row execute function public.prescriptions_guard();
 
--- ---------- Billing: status helper ----------
+
 create or replace function public.compute_invoice_status(p_total numeric, p_paid numeric)
 returns public.invoice_status
 language sql immutable
@@ -129,7 +120,7 @@ as $$
   end)::public.invoice_status
 $$;
 
--- ---------- Billing: invoice_items -> auto-recalculate invoice total ----------
+
 create or replace function public.invoice_items_guard()
 returns trigger
 language plpgsql
@@ -185,7 +176,7 @@ create trigger trg_invoice_items_recalc
   after insert or update or delete on public.invoice_items
   for each row execute function public.invoice_items_recalc();
 
--- ---------- Billing: payments ----------
+
 create or replace function public.payments_guard()
 returns trigger
 language plpgsql
@@ -250,12 +241,7 @@ create trigger trg_payments_block_modify
   before update or delete on public.payments
   for each row execute function public.payments_block_modify();
 
--- =====================================================================
--- TRANSACTION FUNCTIONS (RPC)
--- The whole function is a single transaction: if anything fails, EVERYTHING is rolled back.
--- =====================================================================
 
--- dispense_prescription: reduce the stock + add to the invoice + mark as dispensed.
 create or replace function public.dispense_prescription(p_prescription_id uuid, p_invoice_id uuid)
 returns uuid
 language plpgsql
@@ -308,7 +294,7 @@ begin
 end;
 $$;
 
--- void_invoice: admin only, and not allowed once a payment exists.
+
 create or replace function public.void_invoice(p_invoice_id uuid)
 returns void
 language plpgsql
@@ -336,11 +322,6 @@ revoke all on function public.void_invoice(uuid)                from public, ano
 grant execute on function public.dispense_prescription(uuid, uuid) to authenticated;
 grant execute on function public.void_invoice(uuid)                to authenticated;
 
--- =====================================================================
--- DASHBOARD VIEWS
--- security_invoker = true: the view follows the RLS of the user who runs the query
--- (so a doctor only sees their own stats).
--- =====================================================================
 
 create view public.v_dashboard_kpis with (security_invoker = true) as
 select

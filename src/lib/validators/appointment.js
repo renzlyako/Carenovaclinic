@@ -2,7 +2,7 @@ import { z } from "zod";
 import { APPOINTMENT_STATUS } from "@/lib/constants/status";
 import { UUID_REGEX } from "@/lib/utils/forms";
 
-// What <input type="datetime-local"> sends, e.g. "2026-11-05T09:30" (clinic time).
+
 const scheduleBase = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, "Date and time are required")
@@ -14,7 +14,7 @@ const shared = {
   reason: z.string().trim().max(255, "Maximum 255 characters"),
 };
 
-// New appointments must be in the future (a 1-minute grace so "now" still works).
+
 export const appointmentCreateSchema = z.object({
   ...shared,
   schedule: scheduleBase.refine(
@@ -23,7 +23,6 @@ export const appointmentCreateSchema = z.object({
   ),
 });
 
-// When editing we also allow changing the status.
 export const appointmentUpdateSchema = z.object({
   ...shared,
   schedule: scheduleBase,

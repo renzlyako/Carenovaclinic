@@ -5,7 +5,6 @@ import Button from "@/components/ui/Button";
 import LinkButton from "@/components/ui/LinkButton";
 import { Save, X } from "lucide-react";
 
-// Shared by "New medicine" and "Edit medicine". The Active checkbox only appears when editing.
 export default function MedicineForm({ action, medicine, submitLabel = "Save", showActive = false }) {
   const [state, formAction, pending] = useActionState(action, null);
   const value = (name, fallback = "") => state?.values?.[name] ?? medicine?.[name] ?? fallback;

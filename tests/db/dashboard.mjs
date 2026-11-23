@@ -1,6 +1,7 @@
+import { fileURLToPath } from "node:url";
 import { PGlite } from "@electric-sql/pglite";
 import fs from "fs";
-const read = (f) => fs.readFileSync(new URL("../../supabase/", import.meta.url).pathname + f, "utf8");
+const read = (f) => fs.readFileSync(fileURLToPath(new URL("../../supabase/", import.meta.url)) + f, "utf8");
 let pass = 0, fail = 0;
 const ok = (n, c, x = "") => { if (c) { pass++; console.log("  PASS", n); } else { fail++; console.log("  FAIL", n, x); } };
 

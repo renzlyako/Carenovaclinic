@@ -14,10 +14,9 @@ import {
   createConsultation, updateConsultation, deleteConsultation, createPrescription, deletePrescription,
 } from "@/services/consultations.service";
 
-// Only doctors write clinical records. (Admins can read them. RLS enforces the same rule.)
 const DOCTOR_ONLY = [ROLES.DOCTOR];
 
-// Create. Used as: useActionState(createConsultationAction.bind(null, appointmentId), null)
+
 export async function createConsultationAction(appointmentId, prevState, formData) {
   await requireRole(DOCTOR_ONLY);
   if (!UUID_REGEX.test(appointmentId)) return { error: "Invalid appointment." };
@@ -26,7 +25,7 @@ export async function createConsultationAction(appointmentId, prevState, formDat
   const parsed = consultationSchema.safeParse(values);
   if (!parsed.success) return { fieldErrors: zodFieldErrors(parsed.error), values };
 
-  const appointment = await getAppointment(appointmentId); // RLS: only the doctor's own appointment is visible
+  const appointment = await getAppointment(appointmentId); 
   if (!appointment) return { error: "Appointment not found or it is not yours.", values };
   if (appointment.status === "cancelled" || appointment.status === "no_show") {
     return { error: "You cannot record a consultation for a cancelled or no-show appointment.", values };
@@ -43,7 +42,7 @@ export async function createConsultationAction(appointmentId, prevState, formDat
     return { error: friendlyDbError(error), values };
   }
 
-  // A recorded consultation means the visit happened, so close the appointment.
+
   if (appointment.status === "scheduled") await changeStatusFromScheduled(appointmentId, "completed");
 
   revalidatePath("/consultations");
@@ -51,7 +50,6 @@ export async function createConsultationAction(appointmentId, prevState, formDat
   redirect(`/consultations/${data.id}?msg=created`);
 }
 
-// Update diagnosis / notes.
 export async function updateConsultationAction(id, prevState, formData) {
   await requireRole(DOCTOR_ONLY);
   if (!UUID_REGEX.test(id)) return { error: "Invalid consultation." };
@@ -75,7 +73,6 @@ export async function updateConsultationAction(id, prevState, formData) {
   redirect(`/consultations/${id}?msg=updated`);
 }
 
-// Delete. Not possible while prescriptions exist (the database protects them).
 export async function deleteConsultationAction(id, prevState) {
   await requireRole(DOCTOR_ONLY);
   if (!UUID_REGEX.test(id)) return { error: "Invalid consultation." };
@@ -94,7 +91,6 @@ export async function deleteConsultationAction(id, prevState) {
   redirect("/consultations?msg=deleted");
 }
 
-// Add a prescription. Used as: useActionState(addPrescriptionAction.bind(null, consultationId), null)
 export async function addPrescriptionAction(consultationId, prevState, formData) {
   await requireRole(DOCTOR_ONLY);
   if (!UUID_REGEX.test(consultationId)) return { error: "Invalid consultation." };
@@ -120,8 +116,6 @@ export async function addPrescriptionAction(consultationId, prevState, formData)
   return { success: "Prescription added.", at: Date.now() };
 }
 
-// Remove a prescription that has not been dispensed yet.
-// Used as: <ConfirmDeleteButton action={deletePrescriptionAction.bind(null, consultationId, rxId)} />
 export async function deletePrescriptionAction(consultationId, id, prevState) {
   await requireRole(DOCTOR_ONLY);
   if (!UUID_REGEX.test(id) || !UUID_REGEX.test(consultationId)) return { error: "Invalid prescription." };

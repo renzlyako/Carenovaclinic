@@ -1,11 +1,11 @@
 import { z } from "zod";
 import { SEX_OPTIONS } from "@/lib/constants/status";
 
-// Same rule as the CHECK constraint in the database (0001_schema.sql).
+
 const PHONE = /^[0-9+ -]{7,15}$/;
 const PHONE_MESSAGE = "Enter a valid number (7-15 characters: digits, +, - or spaces)";
 
-// The database compares birthdate with current_date in UTC, so we do the same here.
+
 const todayUtc = () => new Date().toISOString().slice(0, 10);
 
 export const patientSchema = z.object({
@@ -26,7 +26,7 @@ export const patientSchema = z.object({
     .refine((v) => v === "" || PHONE.test(v), PHONE_MESSAGE),
 });
 
-// Form field names, in the order they appear in the form.
+
 export const PATIENT_FIELDS = [
   "first_name",
   "last_name",

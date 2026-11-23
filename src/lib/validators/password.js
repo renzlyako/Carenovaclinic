@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-// Strong password policy (per the project requirement). Must also match the Supabase Auth settings.
+
 export const passwordSchema = z
   .string()
   .min(10, "Must be at least 10 characters")

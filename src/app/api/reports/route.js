@@ -6,8 +6,7 @@ import { reportQuerySchema } from "@/lib/validators/report";
 import { REPORTS, runReport } from "@/services/reports.service";
 import { toCsv } from "@/lib/utils/csv";
 
-// GET /api/reports?type=daily_collection&from=2026-11-01&to=2026-11-30&format=csv
-// Without format=csv the report is returned as JSON.
+
 export async function GET(request) {
   const { user, error } = await requireApiRole([ROLES.ADMIN, ROLES.RECEPTIONIST]);
   if (error) return error;

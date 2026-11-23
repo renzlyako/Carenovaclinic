@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/guards";
 import { getDashboardData } from "@/services/dashboard.service";
 
-// GET /api/dashboard/summary -> KPIs + chart data (what the dashboard shows, filtered by the user's role)
 export async function GET() {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });

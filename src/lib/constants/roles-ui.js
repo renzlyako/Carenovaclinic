@@ -1,4 +1,3 @@
-// Labels for the role dropdown / badges (kept separate from roles.js so that file stays tiny).
 export const ROLE_OPTIONS = [
   { value: "admin", label: "Admin" },
   { value: "doctor", label: "Doctor" },

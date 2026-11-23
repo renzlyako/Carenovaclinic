@@ -1,4 +1,3 @@
-// Display helpers for appointments.
 export const STATUS_TONE = { scheduled: "blue", completed: "green", cancelled: "red", no_show: "yellow" };
 export const STATUS_LABEL = { scheduled: "Scheduled", completed: "Completed", cancelled: "Cancelled", no_show: "No show" };
 

@@ -12,7 +12,7 @@ export const REPORT_TYPES = [
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const validDate = (v) => DATE.test(v) && !Number.isNaN(new Date(`${v}T00:00:00Z`).getTime());
 
-// Query string of /reports and /api/reports. Dates are optional (defaults are applied in the service).
+
 export const reportQuerySchema = z
   .object({
     type: z.enum(REPORT_TYPES, { error: "Unknown report type" }),

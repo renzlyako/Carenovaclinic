@@ -5,8 +5,7 @@ import { clinicToday } from "@/lib/utils/datetime";
 import { fillDays, fillMonths } from "@/lib/utils/charts";
 import { STATUS_LABEL } from "@/lib/utils/appointment";
 
-// All numbers come from SQL views (security_invoker = true), so Row Level Security applies:
-// a doctor only gets figures about their own appointments.
+
 async function read(query) {
   const { data, error } = await query;
   if (error) throw new Error(error.message);

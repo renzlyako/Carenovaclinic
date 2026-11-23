@@ -28,7 +28,7 @@ export default async function BackupPage() {
           <p className="mt-2 text-sm text-slate-600">
             The file contains confidential patient information. Store it securely and never share it.
           </p>
-          {/* A plain link on purpose: next/link would prefetch it and create a backup (and a log entry) by itself. */}
+          {}
           <a
             href="/api/admin/backup"
             className="mt-4 inline-flex items-center rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-700"

@@ -1,12 +1,11 @@
-// Backup file format. Shared by the backup download, the restore upload check and the tests.
+
 
 export const BACKUP_APP = "CareNova";
 export const BACKUP_FORMAT_VERSION = 1;
 export const MAX_BACKUP_BYTES = 10 * 1024 * 1024; // 10 MB
 export const MAX_BACKUP_ROWS = 200_000;
 
-// Parents first. profiles and doctors are saved for reference, but they are NOT restored
-// (user accounts live in Supabase Auth and are managed on the Users screen).
+
 export const BACKUP_TABLES = [
   "profiles", "doctors", "patients", "medicines",
   "appointments", "consultations", "prescriptions",
@@ -17,8 +16,7 @@ export const RESTORE_TABLES = [
   "prescriptions", "invoices", "invoice_items", "payments",
 ];
 
-// Check an uploaded file (as text) BEFORE it is sent to the database.
-// Returns { error } or { tables, counts, createdAt } (only the restorable tables are returned).
+
 export function parseBackup(text) {
   let json;
   try {

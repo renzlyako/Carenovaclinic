@@ -5,7 +5,6 @@ import { logAuditEvent } from "@/lib/audit/log";
 import { userCreateSchema } from "@/lib/validators/user";
 import { listUsers, createUser } from "@/services/users.service";
 
-// GET /api/admin/users  -> list of users (admin only)
 export async function GET() {
   const { error } = await requireApiRole([ROLES.ADMIN]);
   if (error) return error;
@@ -17,7 +16,7 @@ export async function GET() {
   }
 }
 
-// POST /api/admin/users  -> create a new account (admin only)
+
 export async function POST(request) {
   const { user, error } = await requireApiRole([ROLES.ADMIN]);
   if (error) return error;

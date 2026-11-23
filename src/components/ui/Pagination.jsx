@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils/cn";
 
-// Server component. Keeps the other query params (like the search text) when changing page.
 export default function Pagination({ basePath, page, pageSize, total, params = {} }) {
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const from = total === 0 ? 0 : (page - 1) * pageSize + 1;

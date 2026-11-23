@@ -5,7 +5,6 @@ import { logAuditEvent } from "@/lib/audit/log";
 import { parseBackup, MAX_BACKUP_BYTES } from "@/lib/utils/backup";
 import { restoreBackup } from "@/services/backup.service";
 
-// POST /api/admin/restore (multipart form: file + confirm) -> replace the clinic data with a backup (admin only)
 export async function POST(request) {
   const { user, error } = await requireApiRole([ROLES.ADMIN]);
   if (error) return error;
@@ -28,7 +27,7 @@ export async function POST(request) {
   const { data, error: dbError } = await restoreBackup(parsed.tables);
   if (dbError) {
     console.error("restore failed:", dbError);
-    // The function raises readable messages for known problems; nothing was changed in any case.
+
     const known = dbError.code === "P0001" && dbError.message;
     return NextResponse.json(
       { error: known ? dbError.message : "The restore failed. No data was changed." },

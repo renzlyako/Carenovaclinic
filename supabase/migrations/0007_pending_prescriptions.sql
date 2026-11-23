@@ -1,14 +1,3 @@
--- =====================================================================
--- 0007_pending_prescriptions.sql
--- RUN THIS ONCE in the Supabase SQL Editor (after 0001-0006).
---
--- Why: the front desk must see which prescriptions of a patient are still waiting to
--- be dispensed, but receptionists are (correctly) NOT allowed to read consultations
--- (diagnosis and clinical notes are private to doctors and admins).
--- This function returns ONLY the medicine information (no diagnosis, no notes),
--- and only to admin / receptionist.
--- =====================================================================
-
 create or replace function public.pending_prescriptions(p_patient_id uuid)
 returns table (
   prescription_id uuid,

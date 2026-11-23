@@ -1,8 +1,6 @@
-// Helpers to show audit entries in a readable way.
-
 const IGNORED = new Set(["updated_at"]);
 
-// For an UPDATE: which columns changed? -> [{ key, from, to }]
+
 export function changedFields(oldData, newData) {
   if (!oldData || !newData) return [];
   const keys = new Set([...Object.keys(oldData), ...Object.keys(newData)]);

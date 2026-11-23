@@ -7,8 +7,7 @@ import LinkButton from "@/components/ui/LinkButton";
 import { ROLE_OPTIONS } from "@/lib/constants/roles-ui";
 import { Save, X } from "lucide-react";
 
-// Shared by "New user" and "Edit user".
-// mode="create": email + password fields. mode="edit": email is read-only, no password here.
+
 export default function UserForm({ action, mode = "create", user, lockRole = false, submitLabel = "Save" }) {
   const [state, formAction, pending] = useActionState(action, null);
   const value = (name) => state?.values?.[name] ?? (name === "specialization" || name === "license_no" ? user?.doctor?.[name] : user?.[name]) ?? "";

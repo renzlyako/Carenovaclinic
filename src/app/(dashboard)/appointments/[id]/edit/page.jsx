@@ -17,7 +17,6 @@ export default async function EditAppointmentPage({ params }) {
 
   const [patients, doctors] = await Promise.all([listPatientOptions(), listDoctorOptions()]);
 
-  // Make sure the current patient / doctor are in the dropdowns even if they are not in the first 500 / not active.
   if (appointment.patients && !patients.some((p) => p.id === appointment.patient_id)) patients.unshift(appointment.patients);
   if (appointment.doctors && !doctors.some((d) => d.id === appointment.doctor_id)) doctors.unshift(appointment.doctors);
 

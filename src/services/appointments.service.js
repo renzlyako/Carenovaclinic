@@ -8,9 +8,7 @@ export const APPOINTMENTS_PAGE_SIZE = 10;
 const LIST_SELECT =
   "id, schedule, status, reason, patients(id, patient_no, first_name, last_name), doctors(id, specialization, profiles(full_name))";
 
-// List with filters + pagination. Row Level Security decides what the user can see
-// (doctors only get their own appointments).
-// when: "upcoming" (today onwards, soonest first) | "past" (before today, latest first) | "all"
+
 export async function listAppointments({ when = "upcoming", status = "", doctorId = "", page = 1, pageSize = APPOINTMENTS_PAGE_SIZE } = {}) {
   const supabase = await createClient();
   const from = (page - 1) * pageSize;
@@ -43,7 +41,6 @@ export async function getAppointment(id) {
   return data;
 }
 
-// Options for the <select> fields in the form.
 export async function listPatientOptions(limit = 500) {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -66,7 +63,7 @@ export async function listDoctorOptions() {
   return (data ?? []).sort((a, b) => a.profiles.full_name.localeCompare(b.profiles.full_name));
 }
 
-// The functions below return { data, error } so the Server Action can show a friendly message.
+
 export async function createAppointment(row) {
   const supabase = await createClient();
   return supabase.from("appointments").insert(row).select("id").single();

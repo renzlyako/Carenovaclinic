@@ -1,17 +1,3 @@
--- =====================================================================
--- 0002_rls_policies.sql
--- Helper functions, GRANTs, Row Level Security (RBAC enforced inside the database itself)
---
--- Postgres roles (provided by Supabase):
---   anon           = not logged in           -> NO access to anything
---   authenticated  = logged in (admin/doctor/receptionist; separated by RLS)
---   service_role   = server only (secret key); bypasses RLS
--- =====================================================================
-
--- ---------- HELPER FUNCTIONS ----------
--- SECURITY DEFINER: they can read profiles/doctors even with RLS enabled, so
--- there is no infinite recursion when they are used inside policies.
-
 create or replace function public.current_user_role()
 returns public.user_role
 language sql stable security definer set search_path = ''
@@ -72,14 +58,13 @@ grant execute on function public.doctor_owns_appointment(uuid)  to authenticated
 grant execute on function public.doctor_owns_consultation(uuid) to authenticated, service_role;
 grant execute on function public.doctor_has_patient(uuid)       to authenticated, service_role;
 
--- ---------- GRANTS (table privileges) ----------
--- "Automatically expose new tables" is off in Supabase, so every privilege is granted manually here.
+
 grant usage on schema public to anon, authenticated, service_role;
 
 revoke all on all tables in schema public from anon;
 revoke all on all tables in schema public from authenticated;
 
--- authenticated: RLS decides who is allowed to see or change each row.
+
 grant select on
   public.profiles, public.doctors, public.patients, public.medicines,
   public.appointments, public.consultations, public.prescriptions,
@@ -93,12 +78,12 @@ grant insert, update, delete on public.medicines     to authenticated;
 grant insert, update, delete on public.appointments  to authenticated;
 grant insert, update, delete on public.consultations to authenticated;
 
--- Column-level: the client cannot touch dispensed_at / dispensed_by.
+
 grant insert (consultation_id, medicine_id, dosage, qty) on public.prescriptions to authenticated;
 grant update (medicine_id, dosage, qty)                  on public.prescriptions to authenticated;
 grant delete                                             on public.prescriptions to authenticated;
 
--- Column-level: total / amount_paid / status are changed by triggers only.
+
 grant insert (patient_id, appointment_id, notes) on public.invoices to authenticated;
 grant update (notes)                             on public.invoices to authenticated;
 grant delete                                     on public.invoices to authenticated;
@@ -107,12 +92,12 @@ grant insert (invoice_id, description, qty, unit_price) on public.invoice_items 
 grant update (description, qty, unit_price)             on public.invoice_items to authenticated;
 grant delete                                            on public.invoice_items to authenticated;
 
--- Payments: insert only (financial records can no longer be changed).
+
 grant insert (invoice_id, amount, method, reference_no) on public.payments to authenticated;
 
--- service_role (server-side admin features: backup, user management, audit events)
+
 grant select, insert, update, delete on all tables in schema public to service_role;
--- Even service_role cannot edit or delete audit logs:
+
 revoke update, delete, truncate on public.audit_logs from service_role;
 
 -- ---------- ENABLE ROW LEVEL SECURITY ----------
@@ -130,7 +115,7 @@ alter table public.audit_logs    enable row level security;
 
 -- ---------- POLICIES ----------
 
--- profiles: all active staff can read (e.g. to show doctor names); only admins can edit.
+
 create policy profiles_select on public.profiles for select to authenticated
   using (id = (select auth.uid()) or (select public.current_user_role()) is not null);
 create policy profiles_update_admin on public.profiles for update to authenticated
@@ -148,7 +133,7 @@ create policy doctors_update_admin on public.doctors for update to authenticated
 create policy doctors_delete_admin on public.doctors for delete to authenticated
   using ((select public.current_user_role()) = 'admin');
 
--- patients: admin/receptionist see all; a doctor sees only patients who have an appointment with them.
+
 create policy patients_select on public.patients for select to authenticated
   using (
     (select public.current_user_role()) in ('admin', 'receptionist')
@@ -162,7 +147,7 @@ create policy patients_update on public.patients for update to authenticated
 create policy patients_delete_admin on public.patients for delete to authenticated
   using ((select public.current_user_role()) = 'admin');
 
--- medicines: readable by all; only admins edit (stock is also changed by the dispense function).
+
 create policy medicines_select on public.medicines for select to authenticated
   using ((select public.current_user_role()) is not null);
 create policy medicines_insert_admin on public.medicines for insert to authenticated
@@ -173,7 +158,7 @@ create policy medicines_update_admin on public.medicines for update to authentic
 create policy medicines_delete_admin on public.medicines for delete to authenticated
   using ((select public.current_user_role()) = 'admin');
 
--- appointments: admin/receptionist see all; a doctor sees only their own appointments.
+
 create policy appointments_select on public.appointments for select to authenticated
   using (
     (select public.current_user_role()) in ('admin', 'receptionist')
@@ -193,7 +178,7 @@ create policy appointments_update on public.appointments for update to authentic
 create policy appointments_delete_admin on public.appointments for delete to authenticated
   using ((select public.current_user_role()) = 'admin');
 
--- consultations: admin = read-only; doctor = CRUD on their own appointments; receptionist = no access.
+
 create policy consultations_select on public.consultations for select to authenticated
   using (
     (select public.current_user_role()) = 'admin'
@@ -207,7 +192,7 @@ create policy consultations_update_doctor on public.consultations for update to 
 create policy consultations_delete_doctor on public.consultations for delete to authenticated
   using ((select public.current_user_role()) = 'doctor' and public.doctor_owns_appointment(appointment_id));
 
--- prescriptions: doctor = own (until dispensed); admin/receptionist = read.
+
 create policy prescriptions_select on public.prescriptions for select to authenticated
   using (
     (select public.current_user_role()) in ('admin', 'receptionist')
@@ -221,7 +206,7 @@ create policy prescriptions_update_doctor on public.prescriptions for update to 
 create policy prescriptions_delete_doctor on public.prescriptions for delete to authenticated
   using ((select public.current_user_role()) = 'doctor' and public.doctor_owns_consultation(consultation_id) and dispensed_at is null);
 
--- invoices: admin/receptionist CRUD; doctor = read-only, for their own appointments.
+
 create policy invoices_select on public.invoices for select to authenticated
   using (
     (select public.current_user_role()) in ('admin', 'receptionist')
@@ -235,7 +220,7 @@ create policy invoices_update on public.invoices for update to authenticated
 create policy invoices_delete_admin on public.invoices for delete to authenticated
   using ((select public.current_user_role()) = 'admin');
 
--- invoice_items and payments: visible only if the invoice is visible (the invoices RLS does the filtering).
+
 create policy invoice_items_select on public.invoice_items for select to authenticated
   using (exists (select 1 from public.invoices i where i.id = invoice_items.invoice_id));
 create policy invoice_items_insert on public.invoice_items for insert to authenticated
@@ -251,7 +236,5 @@ create policy payments_select on public.payments for select to authenticated
 create policy payments_insert on public.payments for insert to authenticated
   with check ((select public.current_user_role()) in ('admin', 'receptionist'));
 
--- audit_logs: only admins can read. NO insert/update/delete policy
--- for anyone in the app; only triggers (SECURITY DEFINER) and service_role can write.
 create policy audit_logs_select_admin on public.audit_logs for select to authenticated
   using ((select public.current_user_role()) = 'admin');

@@ -10,9 +10,7 @@ import { Save, X } from "lucide-react";
 
 const SEX_CHOICES = SEX_OPTIONS.map((s) => ({ value: s, label: capitalize(s) }));
 
-// Shared by "New patient" and "Edit patient".
-// `action` is a Server Action: (prevState, formData) => state
-// On validation errors the action returns { fieldErrors, values } so the user's input is kept.
+
 export default function PatientForm({ action, patient, submitLabel = "Save", cancelHref = "/patients" }) {
   const [state, formAction, pending] = useActionState(action, null);
 

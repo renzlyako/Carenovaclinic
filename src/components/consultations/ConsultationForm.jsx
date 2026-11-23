@@ -5,7 +5,6 @@ import Button from "@/components/ui/Button";
 import LinkButton from "@/components/ui/LinkButton";
 import { Save, X } from "lucide-react";
 
-// Shared by "New consultation" and "Edit consultation".
 export default function ConsultationForm({ action, consultation, submitLabel = "Save", cancelHref }) {
   const [state, formAction, pending] = useActionState(action, null);
   const value = (name) => state?.values?.[name] ?? consultation?.[name] ?? "";

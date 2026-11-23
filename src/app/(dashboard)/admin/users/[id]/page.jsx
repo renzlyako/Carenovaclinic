@@ -21,7 +21,6 @@ export default async function ManageUserPage({ params }) {
   const user = await getUser(id);
   if (!user) notFound();
 
-  // Own role and the role of doctors cannot be changed here.
   const lockRole = user.id === me.id || Boolean(user.doctor);
 
   return (

@@ -14,7 +14,7 @@ export default async function NewAppointmentPage({ searchParams }) {
   const sp = await searchParams;
 
   const [patients, doctors] = await Promise.all([listPatientOptions(), listDoctorOptions()]);
-  // /appointments/new?patient=<id> pre-selects the patient (used by the "Book appointment" button on a patient).
+
   const defaultPatientId = typeof sp.patient === "string" && UUID_REGEX.test(sp.patient) ? sp.patient : "";
 
   return (

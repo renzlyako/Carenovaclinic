@@ -4,7 +4,6 @@ import { ROLES } from "@/lib/constants/roles";
 import { logAuditEvent } from "@/lib/audit/log";
 import { createBackup } from "@/services/backup.service";
 
-// GET /api/admin/backup -> download a JSON backup (admin only)
 export async function GET() {
   const { user, error } = await requireApiRole([ROLES.ADMIN]);
   if (error) return error;

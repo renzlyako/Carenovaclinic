@@ -8,12 +8,11 @@ const LABELS = {
   prescriptions: "Prescriptions", invoices: "Invoices", invoice_items: "Invoice items", payments: "Payments",
 };
 
-// "Restore from file": the file is checked on the server, then replaced in ONE transaction.
 export default function BackupPanel() {
   const [file, setFile] = useState(null);
   const [confirm, setConfirm] = useState("");
   const [pending, setPending] = useState(false);
-  const [result, setResult] = useState(null); // { error } | { restored }
+  const [result, setResult] = useState(null); 
 
   async function onSubmit(e) {
     e.preventDefault();

@@ -2,7 +2,6 @@
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-  // Security headers (bahagi ng security requirement)
   async headers() {
     return [
       {

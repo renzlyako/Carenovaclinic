@@ -2,8 +2,7 @@
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import Card from "@/components/ui/Card";
 
-// horizontal = bars go left to right (good for long labels such as diagnoses)
-// prefix = shown before values in the tooltip, for example "₱"
+
 export default function BarChartCard({ title, data, xKey = "label", yKey = "value", horizontal = false, prefix = "" }) {
   const empty = !data || data.length === 0 || data.every((d) => !d[yKey]);
   return (

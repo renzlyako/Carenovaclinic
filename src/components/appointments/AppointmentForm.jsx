@@ -11,9 +11,7 @@ import { Save, X } from "lucide-react";
 
 const STATUS_CHOICES = APPOINTMENT_STATUS.map((s) => ({ value: s, label: STATUS_LABEL[s] }));
 
-// Shared by "Book appointment" and "Edit appointment".
-// `action` is a Server Action: (prevState, formData) => state
-// `minSchedule` (clinic time, "YYYY-MM-DDTHH:mm") is only used when booking, to block past times.
+
 export default function AppointmentForm({
   action,
   appointment,

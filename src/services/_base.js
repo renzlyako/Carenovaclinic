@@ -1,8 +1,7 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
 
-// Generic CRUD helper. Every query goes through the Supabase client
-// (parameterized -> protected against SQL injection) and follows RLS.
+
 export function createCrudService(table, { select = "*", orderBy = "created_at" } = {}) {
   return {
     async list({ page = 1, pageSize = 10, search, searchColumn } = {}) {

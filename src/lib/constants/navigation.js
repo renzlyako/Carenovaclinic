@@ -1,6 +1,5 @@
 import { ROLES } from "./roles";
 
-// Sidebar items, grouped. "roles" decides who can see each item; "icon" is a key in Sidebar's icon map (lucide).
 export const NAV_GROUPS = [
   {
     label: "Main Menu",
@@ -29,5 +28,5 @@ export const NAV_GROUPS = [
   },
 ];
 
-// Flat list (kept for any code that needs every item).
+
 export const NAV_ITEMS = NAV_GROUPS.flatMap((g) => g.items);

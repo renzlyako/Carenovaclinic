@@ -6,11 +6,9 @@ export const PATIENTS_PAGE_SIZE = 10;
 
 const LIST_COLUMNS = "id, patient_no, first_name, last_name, sex, birthdate, contact_no, created_at";
 
-// Remove characters that have a special meaning in PostgREST filter strings.
+
 const sanitizeSearch = (q) => q.replace(/[,()%*\\"]/g, " ").trim();
 
-// List patients with search + pagination.
-// Row Level Security decides which rows the current user can see (doctors only see their own patients).
 export async function listPatients({ q = "", page = 1, pageSize = PATIENTS_PAGE_SIZE } = {}) {
   const supabase = await createClient();
   const from = (page - 1) * pageSize;
@@ -22,7 +20,7 @@ export async function listPatients({ q = "", page = 1, pageSize = PATIENTS_PAGE_
     .order("patient_seq", { ascending: false })
     .range(from, from + pageSize - 1);
 
-  // Every word must match first name, last name, or patient number.
+
   const tokens = sanitizeSearch(q).split(/\s+/).filter(Boolean).slice(0, 4);
   for (const token of tokens) {
     query = query.or(
@@ -32,13 +30,13 @@ export async function listPatients({ q = "", page = 1, pageSize = PATIENTS_PAGE_
 
   const { data, count, error } = await query;
 
-  // Page number is beyond the last page.
+
   if (error?.code === "PGRST103") return { data: [], count: 0, outOfRange: true };
   if (error) throw new Error(error.message);
   return { data: data ?? [], count: count ?? 0, outOfRange: false };
 }
 
-// Returns the patient, or null if it does not exist or the user is not allowed to see it.
+
 export async function getPatient(id) {
   if (!UUID_REGEX.test(id)) return null;
   const supabase = await createClient();
@@ -59,7 +57,7 @@ export async function getPatientAppointments(patientId) {
   return data ?? [];
 }
 
-// The functions below return { data, error } so the Server Action can show a friendly message.
+
 export async function createPatient(row) {
   const supabase = await createClient();
   return supabase.from("patients").insert(row).select("id").single();

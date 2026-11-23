@@ -74,7 +74,7 @@ export default async function ReportsPage({ searchParams }) {
               <LinkButton href={`/reports?type=${type}`} variant="secondary" icon={CalendarDays}>This month</LinkButton>
             </Form>
           ) : <span />}
-          {/* A plain link on purpose: next/link would prefetch it and log a false export. */}
+          {}
           <a
             href={`/api/reports?${exportQuery.toString()}`}
             className="inline-flex items-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"

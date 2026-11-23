@@ -46,7 +46,7 @@ export default async function AppointmentDetailPage({ params, searchParams }) {
   const isScheduled = appointment.status === "scheduled";
   const patient = appointment.patients;
   const doctor = appointment.doctors;
-  // consultations(id) is a one-to-one embed: an object, an array, or null depending on the client version.
+
   const consultation = Array.isArray(appointment.consultations) ? appointment.consultations[0] : appointment.consultations;
   const canStartConsultation = user.role === ROLES.DOCTOR && !consultation && (isScheduled || appointment.status === "completed");
   const canViewConsultation = Boolean(consultation) && (user.role === ROLES.DOCTOR || user.role === ROLES.ADMIN);

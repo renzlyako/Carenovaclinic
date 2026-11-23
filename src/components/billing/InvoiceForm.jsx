@@ -6,7 +6,6 @@ import Button from "@/components/ui/Button";
 import LinkButton from "@/components/ui/LinkButton";
 import { FilePlus } from "lucide-react";
 
-// New invoice. When the invoice is created from an appointment, the patient is fixed (`lockedPatient`).
 export default function InvoiceForm({ action, patients, lockedPatient, appointmentId = "" }) {
   const [state, formAction, pending] = useActionState(action, null);
   const err = state?.fieldErrors ?? {};

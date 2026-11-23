@@ -4,14 +4,13 @@ import { UUID_REGEX } from "@/lib/utils/forms";
 
 export const MEDICINES_PAGE_SIZE = 10;
 
-// Everyone who is logged in can read medicines; only admins can change them (RLS).
-// filter: "" (all) | "low" (active and stock <= reorder level) | "inactive"
+
 export async function listMedicines({ q = "", filter = "", page = 1, pageSize = MEDICINES_PAGE_SIZE } = {}) {
   const supabase = await createClient();
   const from = (page - 1) * pageSize;
 
   if (filter === "low") {
-    // "stock <= reorder level" compares two columns, so filter in code (the table is small).
+
     let query = supabase.from("medicines").select("*").eq("is_active", true).order("stock_qty").limit(1000);
     if (q) query = query.ilike("name", `%${q.replace(/[%_,()]/g, " ")}%`);
     const { data, error } = await query;

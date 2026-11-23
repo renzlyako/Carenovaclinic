@@ -22,7 +22,7 @@ function Detail({ label, children }) {
   return (
     <div>
       <dt className="text-xs uppercase tracking-wide text-slate-500">{label}</dt>
-      {/* Show "-" only when there is no value (0 is a valid value, e.g. a newborn's age) */}
+      {}
       <dd className="mt-0.5 text-sm text-slate-800">{children === null || children === undefined || children === "" ? "-" : children}</dd>
     </div>
   );

@@ -1,23 +1,3 @@
--- =====================================================================
--- 0008_restore_function.sql
--- RUN THIS ONCE in the Supabase SQL Editor (after 0001-0007), role = postgres.
---
--- restore_from_backup(p_data): replaces the clinic data with the content of a backup
--- file created by the app (Admin -> Backup & Restore).
---
---  * ONE TRANSACTION: if anything fails, EVERYTHING is rolled back and no data changes.
---  * Only service_role can run it (the app calls it from the server after checking
---    that the user is an admin). Browsers (anon / authenticated) cannot call it.
---  * Restored tables: patients, medicines, appointments, consultations, prescriptions,
---    invoices, invoice_items, payments.
---  * NOT restored: profiles and doctors (accounts live in Supabase Auth and are managed in
---    Users) and audit_logs (the audit trail is never replaced or deleted).
---  * The row-level triggers of the restored tables are switched off while loading, so that
---    totals are not calculated twice and the payment lock does not block the reload.
---    They are switched on again before the function ends. The audit trail records ONE
---    RESTORE event (written by the app) instead of thousands of row events.
--- =====================================================================
-
 create or replace function public.restore_from_backup(p_data jsonb)
 returns jsonb
 language plpgsql
@@ -25,7 +5,7 @@ security definer
 set search_path = ''
 as $$
 declare
-  -- parents first (insert order); the delete order is the reverse
+
   v_tables constant text[] := array[
     'patients', 'medicines', 'appointments', 'consultations',
     'prescriptions', 'invoices', 'invoice_items', 'payments'
@@ -53,23 +33,23 @@ begin
   end if;
 
   begin
-    -- 1) switch the row-level triggers off (rolled back automatically if we fail)
+
     foreach v_t in array v_tables loop
       execute format('alter table public.%I disable trigger user', v_t);
     end loop;
 
-    -- 2) delete current data, children first.  "where true": some setups refuse a DELETE without WHERE.
+
     for i in reverse array_length(v_tables, 1)..1 loop
       execute format('delete from public.%I where true', v_tables[i]);
     end loop;
 
-    -- 3) insert the backup, parents first
+
     foreach v_t in array v_tables loop
-      -- columns that are not GENERATED (patient_no, invoice_no, line_total are rebuilt by the database)
+
       select string_agg(format('%I', c.column_name), ', ' order by c.ordinal_position),
              string_agg(
                case
-                 -- a user that no longer exists must not break the restore: keep the row, clear the reference
+
                  when c.column_name in ('created_by', 'dispensed_by', 'received_by')
                    then format('case when exists (select 1 from public.profiles pr where pr.id = r.%1$I) then r.%1$I end', c.column_name)
                  else format('r.%I', c.column_name)
@@ -88,7 +68,7 @@ begin
       get diagnostics v_count = row_count;
       v_counts := v_counts || jsonb_build_object(v_t, v_count);
 
-      -- keep the identity counters (patient_seq, invoice_seq) ahead of the restored rows
+
       for v_col in
         select c.column_name::text
           from information_schema.columns c
@@ -104,7 +84,7 @@ begin
       end loop;
     end loop;
 
-    -- 4) switch the triggers on again
+
     foreach v_t in array v_tables loop
       execute format('alter table public.%I enable trigger user', v_t);
     end loop;

@@ -1,11 +1,3 @@
--- =====================================================================
--- 0003_audit_triggers.sql
--- Audit trail: INSERT / UPDATE / DELETE are recorded automatically,
--- and audit_logs can never be modified or deleted.
--- =====================================================================
-
--- ---------- Generic audit trigger ----------
--- Records: who (auth.uid + email), what action, which table/record, old and new data, and when.
 create or replace function public.audit_trigger_fn()
 returns trigger
 language plpgsql
@@ -30,7 +22,7 @@ begin
     v_old := to_jsonb(old);
     v_new := to_jsonb(new);
     if v_old = v_new then
-      return null;  -- nothing actually changed
+      return null; 
     end if;
     v_record_id := v_new ->> 'id';
   else
@@ -44,7 +36,7 @@ begin
     jsonb_build_object('db_user', current_user)
   );
 
-  return null;  -- AFTER trigger, the return value is ignored
+  return null; 
 end;
 $$;
 
@@ -62,10 +54,7 @@ create trigger audit_invoices      after insert or update or delete on public.in
 create trigger audit_invoice_items after insert or update or delete on public.invoice_items for each row execute function public.audit_trigger_fn();
 create trigger audit_payments      after insert or update or delete on public.payments      for each row execute function public.audit_trigger_fn();
 
--- ---------- audit_logs protection (append-only) ----------
--- Layer 1: RLS  -> no insert/update/delete policy for app users (see 0002)
--- Layer 2: GRANT -> no UPDATE/DELETE privilege, not even for service_role (see 0002)
--- Layer 3: TRIGGER (this one) -> raises an error no matter who tries, even the owner.
+
 create or replace function public.audit_logs_block_modify()
 returns trigger
 language plpgsql

@@ -1,4 +1,3 @@
-// Values used by the Audit Logs filters (the page only offers these, so a filter cannot be abused).
 export const AUDIT_ACTIONS = [
   "INSERT", "UPDATE", "DELETE",
   "LOGIN", "LOGIN_FAILED", "LOGOUT",

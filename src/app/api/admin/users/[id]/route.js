@@ -5,8 +5,7 @@ import { logAuditEvent } from "@/lib/audit/log";
 import { UUID_REGEX } from "@/lib/utils/forms";
 import { setUserActive } from "@/services/users.service";
 
-// PATCH /api/admin/users/:id -> enable / disable the account
-// (name, role and doctor details are edited from the Users screen)
+
 export async function PATCH(request, { params }) {
   const { user, error } = await requireApiRole([ROLES.ADMIN]);
   if (error) return error;

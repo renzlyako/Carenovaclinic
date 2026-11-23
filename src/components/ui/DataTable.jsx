@@ -1,4 +1,3 @@
-// Simple responsive table. columns: [{ key, header, render? }]
 export default function DataTable({ columns, rows, empty = "No records found." }) {
   return (
     <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">

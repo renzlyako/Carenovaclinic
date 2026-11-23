@@ -1,7 +1,8 @@
+import { fileURLToPath } from "node:url";
 import { PGlite } from "@electric-sql/pglite";
 import fs from "fs";
 
-const BASE = new URL("../../supabase/", import.meta.url).pathname;
+const BASE = fileURLToPath(new URL("../../supabase/", import.meta.url));
 const read = (f) => fs.readFileSync(BASE + f, "utf8");
 
 let pass = 0, fail = 0;

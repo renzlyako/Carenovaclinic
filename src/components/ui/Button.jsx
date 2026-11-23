@@ -6,7 +6,6 @@ const variants = {
   danger: "bg-red-600 text-white shadow-sm hover:bg-red-700",
 };
 
-// icon = optional lucide component, shown before the text.
 export default function Button({ variant = "primary", className, icon: Icon, children, ...props }) {
   return (
     <button

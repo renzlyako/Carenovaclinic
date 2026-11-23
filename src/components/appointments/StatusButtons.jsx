@@ -14,8 +14,6 @@ function CompleteButton({ action }) {
   );
 }
 
-// Buttons shown on a scheduled appointment.
-// `actions` = { completed, no_show, cancelled }: Server Actions with the id and status already bound.
 export default function StatusButtons({ actions }) {
   return (
     <div className="flex flex-wrap items-start gap-2">

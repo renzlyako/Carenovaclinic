@@ -6,7 +6,7 @@ export const INVOICES_PAGE_SIZE = 10;
 
 const PATIENT = "patients(id, patient_no, first_name, last_name)";
 
-// RLS: admin and receptionist see all invoices; a doctor only sees invoices of their own appointments.
+
 export async function listInvoices({ q = "", status = "", page = 1, pageSize = INVOICES_PAGE_SIZE } = {}) {
   const supabase = await createClient();
   const from = (page - 1) * pageSize;
@@ -57,8 +57,7 @@ export async function listPayments(invoiceId) {
   return data ?? [];
 }
 
-// Prescriptions of this patient that are not dispensed yet (admin / receptionist only).
-// Uses a database function because receptionists cannot read consultations (diagnosis is private).
+
 export async function listPendingPrescriptions(patientId) {
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("pending_prescriptions", { p_patient_id: patientId });
@@ -66,7 +65,7 @@ export async function listPendingPrescriptions(patientId) {
   return data ?? [];
 }
 
-// An existing, non-void invoice for an appointment (to avoid billing the same visit twice).
+
 export async function findInvoiceForAppointment(appointmentId) {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -90,7 +89,7 @@ export async function createInvoiceItem(row) {
   return supabase.from("invoice_items").insert(row).select("id").single();
 }
 
-// Only manual items can be removed. Medicine items were created by dispensing (the stock was already reduced).
+
 export async function deleteManualInvoiceItem(id) {
   const supabase = await createClient();
   return supabase.from("invoice_items").delete().eq("id", id).is("medicine_id", null).select("id");
@@ -101,7 +100,7 @@ export async function createPayment(row) {
   return supabase.from("payments").insert(row).select("id").single();
 }
 
-// Transaction functions: each runs entirely inside the database (all-or-nothing).
+
 export async function dispensePrescription(prescriptionId, invoiceId) {
   const supabase = await createClient();
   return supabase.rpc("dispense_prescription", { p_prescription_id: prescriptionId, p_invoice_id: invoiceId });

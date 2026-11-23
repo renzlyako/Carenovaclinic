@@ -1,6 +1,5 @@
 "use client";
 
-// Shown when a page in the dashboard throws an error (for example the database is unreachable).
 export default function DashboardError({ error, reset }) {
   return (
     <div className="mx-auto max-w-md rounded-xl border border-red-200 bg-white p-6 text-center">

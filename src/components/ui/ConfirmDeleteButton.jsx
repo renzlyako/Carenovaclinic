@@ -2,10 +2,7 @@
 import { useState, useActionState } from "react";
 import Button from "@/components/ui/Button";
 
-// Reusable button with a confirmation dialog (used for delete, cancel, no-show...).
-// `action` is a Server Action with the signature (prevState, formData) => state,
-// for example: deletePatientAction.bind(null, patient.id)
-// If the action returns { error }, the message is shown inside the dialog.
+
 export default function ConfirmDeleteButton({
   action,
   label = "Delete",
@@ -13,7 +10,7 @@ export default function ConfirmDeleteButton({
   message = "This action cannot be undone.",
   confirmLabel = "Yes, delete",
   pendingLabel = "Please wait...",
-  variant = "danger", // style of the button that opens the dialog: "danger" | "secondary"
+  variant = "danger", 
   small = false,
 }) {
   const [state, formAction, pending] = useActionState(action, null);

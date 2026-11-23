@@ -4,7 +4,6 @@ import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 import { UserProvider } from "@/context/UserContext";
 
-// Client wrapper for the mobile menu toggle (responsive).
 export default function DashboardShell({ user, children }) {
   const [open, setOpen] = useState(false);
   return (

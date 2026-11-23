@@ -4,8 +4,7 @@ import { ROLES } from "@/lib/constants/roles";
 import { auditQuerySchema } from "@/lib/validators/audit";
 import { listAuditLogs, AUDIT_PAGE_SIZE } from "@/services/audit.service";
 
-// GET /api/admin/audit-logs?page=1&action=LOGIN&user=ana&table=patients&from=2026-11-01&to=2026-11-30
-// READ-ONLY and admin only. There is no POST / PATCH / DELETE on purpose: the audit trail cannot be changed.
+
 export async function GET(request) {
   const { error } = await requireApiRole([ROLES.ADMIN]);
   if (error) return error;

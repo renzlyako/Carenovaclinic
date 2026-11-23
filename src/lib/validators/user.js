@@ -14,7 +14,6 @@ const base = {
   license_no: z.string().max(60, "Too long"),
 };
 
-// Doctors need specialization + license number (stored in the doctors table).
 function requireDoctorFields(v, ctx) {
   if (v.role !== ROLES.DOCTOR) return;
   if (!v.specialization) ctx.addIssue({ code: "custom", path: ["specialization"], message: "Required for doctors" });

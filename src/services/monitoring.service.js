@@ -1,7 +1,7 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-// Record monitoring (admin only; the page checks the role). Row count and last recorded change per table.
+
 export const MONITORED_TABLES = [
   "profiles", "doctors", "patients", "appointments", "consultations",
   "prescriptions", "medicines", "invoices", "invoice_items", "payments", "audit_logs",

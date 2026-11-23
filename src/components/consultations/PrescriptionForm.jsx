@@ -5,13 +5,12 @@ import Select from "@/components/ui/Select";
 import Button from "@/components/ui/Button";
 import { Plus } from "lucide-react";
 
-// Add-prescription form. `medicines` = [{ id, name, stock_qty }]
 export default function PrescriptionForm({ action, medicines }) {
   const [state, formAction, pending] = useActionState(action, null);
   const formRef = useRef(null);
   const err = state?.fieldErrors ?? {};
 
-  // Clear the form after a successful save.
+
   useEffect(() => {
     if (state?.success) formRef.current?.reset();
   }, [state]);

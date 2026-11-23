@@ -2,7 +2,6 @@
 import { useActionState } from "react";
 import Button from "@/components/ui/Button";
 
-// `action` = dispenseAction.bind(null, invoiceId, prescriptionId)
 export default function DispenseButton({ action, disabled = false }) {
   const [state, formAction, pending] = useActionState(action, null);
   return (

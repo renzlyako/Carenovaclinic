@@ -2,8 +2,8 @@ import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { BACKUP_APP, BACKUP_FORMAT_VERSION, BACKUP_TABLES } from "@/lib/utils/backup";
 
-// Admin only (the callers check the role). Uses the service_role client because it reads every table.
-const PAGE = 1000; // the API returns at most 1000 rows per request, so read page by page
+
+const PAGE = 1000; 
 
 async function fetchAll(admin, table) {
   const rows = [];
@@ -34,7 +34,7 @@ export async function createBackup(createdBy) {
   };
 }
 
-// One database transaction (see supabase/migrations/0008_restore_function.sql): all or nothing.
+
 export async function restoreBackup(tables) {
   const admin = createAdminClient();
   return admin.rpc("restore_from_backup", { p_data: tables });

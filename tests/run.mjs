@@ -1,14 +1,16 @@
 // Runs every test file in tests/unit and tests/db. A file fails on a non-zero exit code or any FAIL line.
 import { readdirSync } from "node:fs";
 import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 const only = process.argv[2]; // "unit" | "db" | undefined
-const dir = new URL(".", import.meta.url).pathname;
+const dir = fileURLToPath(new URL(".", import.meta.url));
+const registerUrl = new URL("register.mjs", import.meta.url).href;
 let bad = 0, total = 0;
 for (const group of ["unit", "db"]) {
   if (only && only !== group) continue;
   for (const f of readdirSync(dir + group).filter((n) => n.endsWith(".mjs")).sort()) {
     total++;
-    const r = spawnSync(process.execPath, ["--import", dir + "register.mjs", dir + group + "/" + f], { encoding: "utf8" });
+    const r = spawnSync(process.execPath, ["--import", registerUrl, dir + group + "/" + f], { encoding: "utf8" });
     const out = (r.stdout || "") + (r.stderr || "");
     const failed = r.status !== 0 || /\bFAIL\b/.test(out);
     const checks = (out.match(/PASS/g) || []).length;

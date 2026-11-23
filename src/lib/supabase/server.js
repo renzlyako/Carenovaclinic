@@ -1,8 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
-// For Server Components, Server Actions, and Route Handlers.
-// Follows RLS because it uses the logged-in user's session.
+
 export async function createClient() {
   const cookieStore = await cookies();
 
@@ -20,7 +19,7 @@ export async function createClient() {
               cookieStore.set(name, value, options)
             );
           } catch {
-            // Called from a Server Component; this is fine, the middleware refreshes the session.
+
           }
         },
       },

@@ -1,5 +1,3 @@
-// Shows a banner based on a code in the URL, like ?msg=created or ?err=failed.
-// Example: <FlashMessage code={sp.msg} messages={{ created: "Patient created." }} />
 const TONES = {
   success: "border-green-200 bg-green-50 text-green-800",
   error: "border-red-200 bg-red-50 text-red-800",

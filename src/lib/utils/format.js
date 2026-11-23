@@ -3,7 +3,7 @@ import { CLINIC_TIME_ZONE } from "./datetime";
 export const formatCurrency = (n) =>
   new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(Number(n ?? 0));
 
-// Dates and times are always shown in clinic time, no matter where the server runs.
+
 export const formatDate = (d) =>
   d ? new Intl.DateTimeFormat("en-PH", { dateStyle: "medium", timeZone: CLINIC_TIME_ZONE }).format(new Date(d)) : "-";
 

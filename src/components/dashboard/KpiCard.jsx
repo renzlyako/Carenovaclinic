@@ -8,7 +8,6 @@ const TONES = {
   violet: "bg-violet-50 text-violet-600",
 };
 
-// icon = lucide component; tone = color of the icon tile; hintTone = "bad" shows the hint in red.
 export default function KpiCard({ label, value, hint, icon: Icon, tone = "brand", hintTone }) {
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">

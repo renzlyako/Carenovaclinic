@@ -1,8 +1,3 @@
--- =====================================================================
--- 0001_schema.sql
--- CareNova Family Clinic: enums, tables, PK/FK, constraints, indexes
--- =====================================================================
-
 -- ---------- ENUMS ----------
 create type public.user_role          as enum ('admin', 'doctor', 'receptionist');
 create type public.sex_type           as enum ('male', 'female', 'other');
@@ -86,7 +81,7 @@ create table public.appointments (
   updated_at  timestamptz not null default now()
 );
 
--- No double-booking: a doctor cannot have two appointments at the same time (unless the earlier one is cancelled).
+
 create unique index appointments_no_double_booking
   on public.appointments (doctor_id, schedule)
   where status <> 'cancelled';
@@ -157,7 +152,6 @@ create table public.payments (
 );
 
 -- ---------- AUDIT LOGS (append-only; see 0003) ----------
--- Intentionally no foreign key: the log must be kept even if the user is deleted.
 create table public.audit_logs (
   id          bigint generated always as identity primary key,
   user_id     uuid,
@@ -197,19 +191,7 @@ create trigger trg_consultations_updated before update on public.consultations f
 create trigger trg_prescriptions_updated before update on public.prescriptions for each row execute function public.set_updated_at();
 create trigger trg_invoices_updated      before update on public.invoices      for each row execute function public.set_updated_at();
 create trigger trg_invoice_items_updated before update on public.invoice_items for each row execute function public.set_updated_at();
--- =====================================================================
--- 0002_rls_policies.sql
--- Helper functions, GRANTs, Row Level Security (RBAC enforced inside the database itself)
---
--- Postgres roles (provided by Supabase):
---   anon           = not logged in           -> NO access to anything
---   authenticated  = logged in (admin/doctor/receptionist; separated by RLS)
---   service_role   = server only (secret key); bypasses RLS
--- =====================================================================
 
--- ---------- HELPER FUNCTIONS ----------
--- SECURITY DEFINER: they can read profiles/doctors even with RLS enabled, so
--- there is no infinite recursion when they are used inside policies.
 
 create or replace function public.current_user_role()
 returns public.user_role
@@ -272,13 +254,11 @@ grant execute on function public.doctor_owns_consultation(uuid) to authenticated
 grant execute on function public.doctor_has_patient(uuid)       to authenticated, service_role;
 
 -- ---------- GRANTS (table privileges) ----------
--- "Automatically expose new tables" is off in Supabase, so every privilege is granted manually here.
 grant usage on schema public to anon, authenticated, service_role;
 
 revoke all on all tables in schema public from anon;
 revoke all on all tables in schema public from authenticated;
 
--- authenticated: RLS decides who is allowed to see or change each row.
 grant select on
   public.profiles, public.doctors, public.patients, public.medicines,
   public.appointments, public.consultations, public.prescriptions,
@@ -292,12 +272,10 @@ grant insert, update, delete on public.medicines     to authenticated;
 grant insert, update, delete on public.appointments  to authenticated;
 grant insert, update, delete on public.consultations to authenticated;
 
--- Column-level: the client cannot touch dispensed_at / dispensed_by.
 grant insert (consultation_id, medicine_id, dosage, qty) on public.prescriptions to authenticated;
 grant update (medicine_id, dosage, qty)                  on public.prescriptions to authenticated;
 grant delete                                             on public.prescriptions to authenticated;
 
--- Column-level: total / amount_paid / status are changed by triggers only.
 grant insert (patient_id, appointment_id, notes) on public.invoices to authenticated;
 grant update (notes)                             on public.invoices to authenticated;
 grant delete                                     on public.invoices to authenticated;
@@ -306,12 +284,10 @@ grant insert (invoice_id, description, qty, unit_price) on public.invoice_items 
 grant update (description, qty, unit_price)             on public.invoice_items to authenticated;
 grant delete                                            on public.invoice_items to authenticated;
 
--- Payments: insert only (financial records can no longer be changed).
 grant insert (invoice_id, amount, method, reference_no) on public.payments to authenticated;
 
--- service_role (server-side admin features: backup, user management, audit events)
 grant select, insert, update, delete on all tables in schema public to service_role;
--- Even service_role cannot edit or delete audit logs:
+
 revoke update, delete, truncate on public.audit_logs from service_role;
 
 -- ---------- ENABLE ROW LEVEL SECURITY ----------
@@ -329,7 +305,7 @@ alter table public.audit_logs    enable row level security;
 
 -- ---------- POLICIES ----------
 
--- profiles: all active staff can read (e.g. to show doctor names); only admins can edit.
+
 create policy profiles_select on public.profiles for select to authenticated
   using (id = (select auth.uid()) or (select public.current_user_role()) is not null);
 create policy profiles_update_admin on public.profiles for update to authenticated
@@ -347,7 +323,6 @@ create policy doctors_update_admin on public.doctors for update to authenticated
 create policy doctors_delete_admin on public.doctors for delete to authenticated
   using ((select public.current_user_role()) = 'admin');
 
--- patients: admin/receptionist see all; a doctor sees only patients who have an appointment with them.
 create policy patients_select on public.patients for select to authenticated
   using (
     (select public.current_user_role()) in ('admin', 'receptionist')
@@ -361,7 +336,6 @@ create policy patients_update on public.patients for update to authenticated
 create policy patients_delete_admin on public.patients for delete to authenticated
   using ((select public.current_user_role()) = 'admin');
 
--- medicines: readable by all; only admins edit (stock is also changed by the dispense function).
 create policy medicines_select on public.medicines for select to authenticated
   using ((select public.current_user_role()) is not null);
 create policy medicines_insert_admin on public.medicines for insert to authenticated
@@ -372,7 +346,6 @@ create policy medicines_update_admin on public.medicines for update to authentic
 create policy medicines_delete_admin on public.medicines for delete to authenticated
   using ((select public.current_user_role()) = 'admin');
 
--- appointments: admin/receptionist see all; a doctor sees only their own appointments.
 create policy appointments_select on public.appointments for select to authenticated
   using (
     (select public.current_user_role()) in ('admin', 'receptionist')
@@ -392,7 +365,6 @@ create policy appointments_update on public.appointments for update to authentic
 create policy appointments_delete_admin on public.appointments for delete to authenticated
   using ((select public.current_user_role()) = 'admin');
 
--- consultations: admin = read-only; doctor = CRUD on their own appointments; receptionist = no access.
 create policy consultations_select on public.consultations for select to authenticated
   using (
     (select public.current_user_role()) = 'admin'
@@ -406,7 +378,6 @@ create policy consultations_update_doctor on public.consultations for update to 
 create policy consultations_delete_doctor on public.consultations for delete to authenticated
   using ((select public.current_user_role()) = 'doctor' and public.doctor_owns_appointment(appointment_id));
 
--- prescriptions: doctor = own (until dispensed); admin/receptionist = read.
 create policy prescriptions_select on public.prescriptions for select to authenticated
   using (
     (select public.current_user_role()) in ('admin', 'receptionist')
@@ -420,7 +391,6 @@ create policy prescriptions_update_doctor on public.prescriptions for update to 
 create policy prescriptions_delete_doctor on public.prescriptions for delete to authenticated
   using ((select public.current_user_role()) = 'doctor' and public.doctor_owns_consultation(consultation_id) and dispensed_at is null);
 
--- invoices: admin/receptionist CRUD; doctor = read-only, for their own appointments.
 create policy invoices_select on public.invoices for select to authenticated
   using (
     (select public.current_user_role()) in ('admin', 'receptionist')
@@ -434,7 +404,6 @@ create policy invoices_update on public.invoices for update to authenticated
 create policy invoices_delete_admin on public.invoices for delete to authenticated
   using ((select public.current_user_role()) = 'admin');
 
--- invoice_items and payments: visible only if the invoice is visible (the invoices RLS does the filtering).
 create policy invoice_items_select on public.invoice_items for select to authenticated
   using (exists (select 1 from public.invoices i where i.id = invoice_items.invoice_id));
 create policy invoice_items_insert on public.invoice_items for insert to authenticated
@@ -450,18 +419,10 @@ create policy payments_select on public.payments for select to authenticated
 create policy payments_insert on public.payments for insert to authenticated
   with check ((select public.current_user_role()) in ('admin', 'receptionist'));
 
--- audit_logs: only admins can read. NO insert/update/delete policy
--- for anyone in the app; only triggers (SECURITY DEFINER) and service_role can write.
+
 create policy audit_logs_select_admin on public.audit_logs for select to authenticated
   using ((select public.current_user_role()) = 'admin');
--- =====================================================================
--- 0003_audit_triggers.sql
--- Audit trail: INSERT / UPDATE / DELETE are recorded automatically,
--- and audit_logs can never be modified or deleted.
--- =====================================================================
 
--- ---------- Generic audit trigger ----------
--- Records: who (auth.uid + email), what action, which table/record, old and new data, and when.
 create or replace function public.audit_trigger_fn()
 returns trigger
 language plpgsql
@@ -486,7 +447,7 @@ begin
     v_old := to_jsonb(old);
     v_new := to_jsonb(new);
     if v_old = v_new then
-      return null;  -- nothing actually changed
+      return null;  
     end if;
     v_record_id := v_new ->> 'id';
   else
@@ -500,7 +461,7 @@ begin
     jsonb_build_object('db_user', current_user)
   );
 
-  return null;  -- AFTER trigger, the return value is ignored
+  return null;  
 end;
 $$;
 
@@ -518,10 +479,7 @@ create trigger audit_invoices      after insert or update or delete on public.in
 create trigger audit_invoice_items after insert or update or delete on public.invoice_items for each row execute function public.audit_trigger_fn();
 create trigger audit_payments      after insert or update or delete on public.payments      for each row execute function public.audit_trigger_fn();
 
--- ---------- audit_logs protection (append-only) ----------
--- Layer 1: RLS  -> no insert/update/delete policy for app users (see 0002)
--- Layer 2: GRANT -> no UPDATE/DELETE privilege, not even for service_role (see 0002)
--- Layer 3: TRIGGER (this one) -> raises an error no matter who tries, even the owner.
+
 create or replace function public.audit_logs_block_modify()
 returns trigger
 language plpgsql
@@ -542,14 +500,7 @@ create trigger audit_logs_no_update_delete
 create trigger audit_logs_no_truncate
   before truncate on public.audit_logs
   for each statement execute function public.audit_logs_block_modify();
--- =====================================================================
--- 0004_functions_views.sql
--- Business-rule triggers, transaction functions (RPC), auth integration, dashboard views
--- =====================================================================
 
--- ---------- Auth integration: auto-create profile ----------
--- The role is read from raw_app_meta_data (a user CANNOT change it at signup).
--- If no role was set by an admin/the server -> the profile is INACTIVE (it must be approved first).
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
@@ -794,12 +745,7 @@ create trigger trg_payments_block_modify
   before update or delete on public.payments
   for each row execute function public.payments_block_modify();
 
--- =====================================================================
--- TRANSACTION FUNCTIONS (RPC)
--- The whole function is a single transaction: if anything fails, EVERYTHING is rolled back.
--- =====================================================================
 
--- dispense_prescription: reduce the stock + add to the invoice + mark as dispensed.
 create or replace function public.dispense_prescription(p_prescription_id uuid, p_invoice_id uuid)
 returns uuid
 language plpgsql
@@ -852,7 +798,6 @@ begin
 end;
 $$;
 
--- void_invoice: admin only, and not allowed once a payment exists.
 create or replace function public.void_invoice(p_invoice_id uuid)
 returns void
 language plpgsql
@@ -880,11 +825,6 @@ revoke all on function public.void_invoice(uuid)                from public, ano
 grant execute on function public.dispense_prescription(uuid, uuid) to authenticated;
 grant execute on function public.void_invoice(uuid)                to authenticated;
 
--- =====================================================================
--- DASHBOARD VIEWS
--- security_invoker = true: the view follows the RLS of the user who runs the query
--- (so a doctor only sees their own stats).
--- =====================================================================
 
 create view public.v_dashboard_kpis with (security_invoker = true) as
 select
@@ -966,16 +906,7 @@ grant select on
   public.v_appointment_status_counts, public.v_top_diagnoses, public.v_low_stock_medicines,
   public.v_daily_collection, public.v_patients_per_doctor
 to authenticated, service_role;
--- =====================================================================
--- 0006_appointments_doctor_guard.sql
--- RUN THIS ONCE in the Supabase SQL Editor (after 0001-0005).
---
--- Why: RLS lets a doctor update their own appointments, and column privileges
--- are the same for every logged-in user. Without this guard, a doctor could
--- change the patient, schedule or reason of an appointment by calling the API
--- directly. This trigger makes sure a doctor can only change the STATUS
--- (scheduled -> completed / cancelled / no_show).
--- =====================================================================
+
 
 create or replace function public.appointments_doctor_guard()
 returns trigger
@@ -1003,16 +934,6 @@ create trigger trg_appointments_doctor_guard
   before update on public.appointments
   for each row execute function public.appointments_doctor_guard();
 
--- =====================================================================
--- 0007_pending_prescriptions.sql
--- RUN THIS ONCE in the Supabase SQL Editor (after 0001-0006).
---
--- Why: the front desk must see which prescriptions of a patient are still waiting to
--- be dispensed, but receptionists are (correctly) NOT allowed to read consultations
--- (diagnosis and clinical notes are private to doctors and admins).
--- This function returns ONLY the medicine information (no diagnosis, no notes),
--- and only to admin / receptionist.
--- =====================================================================
 
 create or replace function public.pending_prescriptions(p_patient_id uuid)
 returns table (
@@ -1045,25 +966,6 @@ $$;
 revoke all on function public.pending_prescriptions(uuid) from public, anon;
 grant execute on function public.pending_prescriptions(uuid) to authenticated;
 
--- =====================================================================
--- 0008_restore_function.sql
--- RUN THIS ONCE in the Supabase SQL Editor (after 0001-0007), role = postgres.
---
--- restore_from_backup(p_data): replaces the clinic data with the content of a backup
--- file created by the app (Admin -> Backup & Restore).
---
---  * ONE TRANSACTION: if anything fails, EVERYTHING is rolled back and no data changes.
---  * Only service_role can run it (the app calls it from the server after checking
---    that the user is an admin). Browsers (anon / authenticated) cannot call it.
---  * Restored tables: patients, medicines, appointments, consultations, prescriptions,
---    invoices, invoice_items, payments.
---  * NOT restored: profiles and doctors (accounts live in Supabase Auth and are managed in
---    Users) and audit_logs (the audit trail is never replaced or deleted).
---  * The row-level triggers of the restored tables are switched off while loading, so that
---    totals are not calculated twice and the payment lock does not block the reload.
---    They are switched on again before the function ends. The audit trail records ONE
---    RESTORE event (written by the app) instead of thousands of row events.
--- =====================================================================
 
 create or replace function public.restore_from_backup(p_data jsonb)
 returns jsonb
@@ -1072,7 +974,7 @@ security definer
 set search_path = ''
 as $$
 declare
-  -- parents first (insert order); the delete order is the reverse
+
   v_tables constant text[] := array[
     'patients', 'medicines', 'appointments', 'consultations',
     'prescriptions', 'invoices', 'invoice_items', 'payments'
@@ -1100,23 +1002,23 @@ begin
   end if;
 
   begin
-    -- 1) switch the row-level triggers off (rolled back automatically if we fail)
+
     foreach v_t in array v_tables loop
       execute format('alter table public.%I disable trigger user', v_t);
     end loop;
 
-    -- 2) delete current data, children first.  "where true": some setups refuse a DELETE without WHERE.
+
     for i in reverse array_length(v_tables, 1)..1 loop
       execute format('delete from public.%I where true', v_tables[i]);
     end loop;
 
-    -- 3) insert the backup, parents first
+
     foreach v_t in array v_tables loop
-      -- columns that are not GENERATED (patient_no, invoice_no, line_total are rebuilt by the database)
+
       select string_agg(format('%I', c.column_name), ', ' order by c.ordinal_position),
              string_agg(
                case
-                 -- a user that no longer exists must not break the restore: keep the row, clear the reference
+
                  when c.column_name in ('created_by', 'dispensed_by', 'received_by')
                    then format('case when exists (select 1 from public.profiles pr where pr.id = r.%1$I) then r.%1$I end', c.column_name)
                  else format('r.%I', c.column_name)
@@ -1135,7 +1037,7 @@ begin
       get diagnostics v_count = row_count;
       v_counts := v_counts || jsonb_build_object(v_t, v_count);
 
-      -- keep the identity counters (patient_seq, invoice_seq) ahead of the restored rows
+
       for v_col in
         select c.column_name::text
           from information_schema.columns c
@@ -1151,7 +1053,7 @@ begin
       end loop;
     end loop;
 
-    -- 4) switch the triggers on again
+
     foreach v_t in array v_tables loop
       execute format('alter table public.%I enable trigger user', v_t);
     end loop;

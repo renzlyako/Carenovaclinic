@@ -1,8 +1,3 @@
--- =====================================================================
--- dev_reset.sql   ⚠️ DELETES ALL DATA AND TABLES OF THE PROJECT (dev only!)
--- Use this if you want to re-run 0001-0008 from scratch.
--- It does not touch auth.users (your accounts).
--- =====================================================================
 drop trigger if exists on_auth_user_created on auth.users;
 
 drop view if exists

@@ -2,7 +2,6 @@ import "server-only";
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "./guards";
 
-// For Route Handlers (/api/...). Returns { user } or { error: Response }.
 export async function requireApiRole(allowedRoles) {
   const user = await getCurrentUser();
   if (!user) {

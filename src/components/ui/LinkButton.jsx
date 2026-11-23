@@ -6,7 +6,6 @@ const variants = {
   secondary: "bg-white text-slate-700 border border-slate-200 shadow-sm hover:bg-slate-50",
 };
 
-// A link that looks like a Button. icon = optional lucide component, shown before the text.
 export default function LinkButton({ href, variant = "primary", small = false, className, icon: Icon, children }) {
   return (
     <Link

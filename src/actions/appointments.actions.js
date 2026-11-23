@@ -27,7 +27,7 @@ function toRow(v) {
   const row = {
     patient_id: v.patient_id,
     doctor_id: v.doctor_id,
-    schedule: clinicLocalToIso(v.schedule), // clinic time -> exact moment (UTC)
+    schedule: clinicLocalToIso(v.schedule), 
     reason: nullIfEmpty(v.reason),
   };
   if (v.status) row.status = v.status;
@@ -42,7 +42,6 @@ function appointmentError(error) {
   return friendlyDbError(error);
 }
 
-// Book. Used as: useActionState(createAppointmentAction, null)
 export async function createAppointmentAction(prevState, formData) {
   await requireRole(CAN_MANAGE);
 
@@ -60,7 +59,6 @@ export async function createAppointmentAction(prevState, formData) {
   redirect(`/appointments/${data.id}?msg=created`);
 }
 
-// Edit / reschedule. Used as: useActionState(updateAppointmentAction.bind(null, id), null)
 export async function updateAppointmentAction(id, prevState, formData) {
   await requireRole(CAN_MANAGE);
   if (!UUID_REGEX.test(id)) return { error: "Invalid appointment." };
@@ -83,8 +81,6 @@ export async function updateAppointmentAction(id, prevState, formData) {
   redirect(`/appointments/${id}?msg=updated`);
 }
 
-// Mark completed / cancelled / no_show. Admin, receptionist, and the doctor who owns it.
-// Used as: <StatusButtons actions={{ completed: setAppointmentStatusAction.bind(null, id, "completed"), ... }} />
 export async function setAppointmentStatusAction(id, status, prevState) {
   await requireRole([ROLES.ADMIN, ROLES.RECEPTIONIST, ROLES.DOCTOR]);
   if (!UUID_REGEX.test(id) || !FINAL_STATUSES.includes(status)) return { error: "Invalid request." };
@@ -103,7 +99,6 @@ export async function setAppointmentStatusAction(id, status, prevState) {
   redirect(`/appointments/${id}?msg=${status}`);
 }
 
-// Delete (admin only).
 export async function deleteAppointmentAction(id, prevState) {
   await requireRole([ROLES.ADMIN]);
   if (!UUID_REGEX.test(id)) return { error: "Invalid appointment." };

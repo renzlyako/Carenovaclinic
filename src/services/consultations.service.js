@@ -7,8 +7,6 @@ export const CONSULTATIONS_PAGE_SIZE = 10;
 
 const APPT = "appointments(id, schedule, status, patients(id, patient_no, first_name, last_name), doctors(id, specialization, profiles(full_name)))";
 
-// Row Level Security decides what is visible: doctors only see consultations of their own
-// appointments, admins see all, receptionists see none.
 export async function listConsultations({ page = 1, pageSize = CONSULTATIONS_PAGE_SIZE } = {}) {
   const supabase = await createClient();
   const from = (page - 1) * pageSize;
@@ -52,7 +50,7 @@ export async function listPrescriptions(consultationId) {
   return data ?? [];
 }
 
-// Medicines a doctor can choose from (active only).
+
 export async function listMedicineOptions() {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -64,7 +62,7 @@ export async function listMedicineOptions() {
   return data ?? [];
 }
 
-// Appointments (up to the end of today) that are scheduled or completed but have no consultation yet.
+
 export async function listAwaitingConsultation(limit = 20) {
   const supabase = await createClient();
   const endOfToday = clinicLocalToIso(`${clinicToday()}T23:59`);
@@ -79,7 +77,6 @@ export async function listAwaitingConsultation(limit = 20) {
   return (data ?? []).filter((a) => !(Array.isArray(a.consultations) ? a.consultations.length : a.consultations)).slice(0, limit);
 }
 
-// { data, error } style so Server Actions can show friendly messages.
 export async function createConsultation(row) {
   const supabase = await createClient();
   return supabase.from("consultations").insert(row).select("id").single();

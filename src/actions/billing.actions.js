@@ -16,7 +16,6 @@ import {
 
 const FRONT_DESK = [ROLES.ADMIN, ROLES.RECEPTIONIST];
 
-// Create an invoice (optionally with a consultation fee as the first item).
 export async function createInvoiceAction(prevState, formData) {
   await requireRole(FRONT_DESK);
 
@@ -28,7 +27,7 @@ export async function createInvoiceAction(prevState, formData) {
   const appointmentId = parsed.data.appointment_id;
 
   if (appointmentId) {
-    // The appointment decides the patient (never trust the hidden field alone).
+
     const appointment = await getAppointment(appointmentId);
     if (!appointment) return { error: "Appointment not found.", values };
     if (appointment.status === "cancelled" || appointment.status === "no_show") {
@@ -61,7 +60,6 @@ export async function createInvoiceAction(prevState, formData) {
   redirect(`/billing/${data.id}?msg=created`);
 }
 
-// Add a manual line item (for example, a procedure or lab fee).
 export async function addInvoiceItemAction(invoiceId, prevState, formData) {
   await requireRole(FRONT_DESK);
   if (!UUID_REGEX.test(invoiceId)) return { error: "Invalid invoice." };
@@ -96,7 +94,6 @@ export async function removeInvoiceItemAction(invoiceId, itemId, prevState) {
   redirect(`/billing/${invoiceId}?msg=item_removed`);
 }
 
-// Record a payment. The database checks the balance, updates the invoice and locks the record.
 export async function recordPaymentAction(invoiceId, prevState, formData) {
   await requireRole(FRONT_DESK);
   if (!UUID_REGEX.test(invoiceId)) return { error: "Invalid invoice." };
@@ -120,8 +117,6 @@ export async function recordPaymentAction(invoiceId, prevState, formData) {
   return { success: "Payment recorded.", at: Date.now() };
 }
 
-// Dispense a prescription onto an invoice: one database transaction
-// (stock - qty, invoice item added, prescription locked).
 export async function dispenseAction(invoiceId, prescriptionId, prevState) {
   await requireRole(FRONT_DESK);
   if (!UUID_REGEX.test(invoiceId) || !UUID_REGEX.test(prescriptionId)) return { error: "Invalid request." };
@@ -136,7 +131,6 @@ export async function dispenseAction(invoiceId, prescriptionId, prevState) {
   redirect(`/billing/${invoiceId}?msg=dispensed`);
 }
 
-// Void an invoice (admin only; not possible after a payment).
 export async function voidInvoiceAction(invoiceId, prevState) {
   await requireRole([ROLES.ADMIN]);
   if (!UUID_REGEX.test(invoiceId)) return { error: "Invalid invoice." };
