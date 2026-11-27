@@ -38,6 +38,9 @@ function appointmentError(error) {
   if (error.code === "23505" && /double_booking/.test(error.message)) {
     return "This doctor already has an appointment at that time. Please choose another time.";
   }
+  if (error.code === "23505" && /appointments_min_gap/.test(error.message)) {
+  return "This doctor already has another appointment too close to that time. Please leave at least 30 minutes between appointments.";
+  }
   if (error.code === "23503") return "The selected patient or doctor no longer exists.";
   return friendlyDbError(error);
 }
