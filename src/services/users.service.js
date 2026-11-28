@@ -2,11 +2,13 @@ import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ROLES } from "@/lib/constants/roles";
 
-
+// User management uses the service_role client (bypasses RLS) because it must touch auth.users.
+// EVERY caller must have already checked that the current user is an admin
+// (requireRole / requireApiRole). Never import this from a Client Component.
 
 const PROFILE_COLUMNS = "id, full_name, role, is_active, created_at, doctors(id, specialization, license_no)";
 
-
+// Turn known database / auth errors into clear messages.
 function friendly(error, fallback) {
   const msg = error?.message ?? "";
   if (/last active admin/i.test(msg)) return "You cannot remove, demote or deactivate the last active admin.";
@@ -18,7 +20,7 @@ function friendly(error, fallback) {
 
 const doctorOf = (p) => (Array.isArray(p?.doctors) ? p.doctors[0] : p?.doctors) ?? null;
 
-
+// All users (profile + email + doctor details).
 export async function listUsers() {
   const admin = createAdminClient();
   const [{ data: profiles, error }, { data: authData, error: authErr }] = await Promise.all([
@@ -41,7 +43,7 @@ export async function getUser(id) {
   return { ...p, email: au?.user?.email ?? null, doctor: doctorOf(p) };
 }
 
-
+// Create the auth account (the DB trigger creates the profile), then the doctors row if needed.
 export async function createUser({ full_name, email, password, role, specialization, license_no }) {
   const admin = createAdminClient();
   const { data, error } = await admin.auth.admin.createUser({
@@ -49,15 +51,27 @@ export async function createUser({ full_name, email, password, role, specializat
     password,
     email_confirm: true,
     user_metadata: { full_name },
-    app_metadata: { role }, 
+    app_metadata: { role }, // read by the handle_new_user() trigger; users cannot change it
   });
   if (error) return { error: friendly(error, "Could not create the account.") };
 
   const id = data.user.id;
+
+  // handle_new_user() (a DB trigger) is what actually creates the profiles row,
+  // reading the role from app_metadata. Rather than trust that it was read
+  // correctly by the time we immediately act on it below, explicitly confirm
+  // the role + active state here - this is what doctors_check_profile_role()
+  // (the trigger on the doctors table) depends on being already correct.
+  const { error: roleErr } = await admin.from("profiles").update({ role, is_active: true }).eq("id", id);
+  if (roleErr) {
+    await admin.auth.admin.deleteUser(id);
+    return { error: friendly(roleErr, "Could not finish setting up the account."), rawError: roleErr };
+  }
+
   if (role === ROLES.DOCTOR) {
     const { error: docErr } = await admin.from("doctors").insert({ profile_id: id, specialization, license_no });
     if (docErr) {
-
+      // Roll back so we never keep a doctor account without doctor details.
       await admin.auth.admin.deleteUser(id);
       return { error: friendly(docErr, "Could not save the doctor details."), rawError: docErr };
     }
@@ -65,7 +79,7 @@ export async function createUser({ full_name, email, password, role, specializat
   return { data: { id } };
 }
 
-
+// Update name / role / doctor details. `actorId` is the admin doing it.
 export async function updateUser(id, actorId, { full_name, role, specialization, license_no }) {
   const admin = createAdminClient();
   const current = await getUser(id);
@@ -94,6 +108,7 @@ export async function updateUser(id, actorId, { full_name, role, specialization,
   return { data: { before: { full_name: current.full_name, role: current.role }, after: { full_name, role } } };
 }
 
+// Enable / disable. A disabled user also gets banned in Supabase Auth, so they cannot log in at all.
 export async function setUserActive(id, actorId, active) {
   if (id === actorId && !active) return { error: "You cannot disable your own account." };
   const admin = createAdminClient();
